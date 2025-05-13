@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>Intrusion Detection System Dashboard</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    header {
+      background: #16213e;
+      padding: 1rem 2rem;
+      width: 100%;
+      text-align: center;
+      font-weight: 700;
+      font-size: 1.8rem;
+      letter-spacing: 1.5px;
+      color: #e94560;
+      box-shadow: 0 2px 10px #0f3460;
+    }
+    main {
+      padding: 2rem;
+      max-width: 700px;
+      width: 90vw;
+      background: #0f3460;
+      border-radius: 10px;
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.7);
+      margin-top: 1.5rem;
+    }
+    form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem 1.5rem;
+    }
+    label {
+      display: flex;
+      flex-direction: column;
+      font-size: 0.9rem;
+      margin-bottom: 0.3rem;
+      color: #ccd6f6;
+    }
+    input[type="number"],
+    select {
+      padding: 0.5rem;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: none;
+      outline: none;
+      font-family: inherit;
+    }
+    button {
+      grid-column: span 2;
+      padding: 0.75rem;
+      font-size: 1.1rem;
+      border-radius: 6px;
+      background-color: #e94560;
+      border: none;
+      color: white;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #ff3366;
+    }
+    .result {
+      margin-top: 1.5rem;
+      font-size: 1.2rem;
+      color: #00d084;
+      text-align: center;
+      font-weight: 600;
+    }
+    .conf-matrix {
+      margin-top: 2rem;
+      text-align: center;
+    }
+    .conf-matrix img {
+      width: 230px;
+      border-radius: 12px;
+      box-shadow: 0 6px 25px rgba(233, 69, 96, 0.5);
+    }
+    @media (max-width: 600px) {
+      form {
+        grid-template-columns: 1fr;
+      }
+      button {
+        grid-column: span 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>Intrusion Detection System (IDS) Dashboard</header>
+  <main>
+    <h2>Input Network Traffic Features</h2>
+    <form method="POST" action="/predict">
+      {% for feature in features %}
+        <label>{{ feature }}
+          {% if feature in ['protocol_type', 'service', 'flag'] %}
+            <select name="{{ feature }}" required>
+              {% if feature == 'protocol_type' %}
+                <option value="0">icmp</option>
+                <option value="1">tcp</option>
+                <option value="2">udp</option>
+              {% elif feature == 'service' %}
+                <!-- Some common services simplified -->
+                <option value="0">http</option>
+                <option value="1">smtp</option>
+                <option value="2">ftp_data</option>
+                <option value="3">other</option>
+              {% elif feature == 'flag' %}
+                <option value="0">SF</option>
+                <option value="1">S0</option>
+                <option value="2">REJ</option>
+                <option value="3">RSTR</option>
+              {% endif %}
+            </select>
+          {% else %}
+            <input type="number" step="any" name="{{ feature }}" required />
+          {% endif %}
+        </label>
+      {% endfor %}
+      <button type="submit">Detect Intrusion</button>
+    </form>
+
+    {% if prediction is not none %}
+      <div class="result">
+        <p><strong>Prediction Result:</strong> {{ 'Attack Detected!' if prediction == 1 else 'Normal Traffic' }}</p>
+      </div>
+    {% endif %}
+
+    <div class="conf-matrix">
+      <h3>Model Confusion Matrix</h3>
+      <img src="data:image/png;base64,{{ conf_matrix_img }}" alt="Confusion Matrix" />
+    </div>
+  </main>
+</body>
+</html>
+
+
