@@ -1,147 +1,238 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-  <title>Intrusion Detection System Dashboard</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #1a1a2e;
-      color: #eee;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    header {
-      background: #16213e;
-      padding: 1rem 2rem;
-      width: 100%;
-      text-align: center;
-      font-weight: 700;
-      font-size: 1.8rem;
-      letter-spacing: 1.5px;
-      color: #e94560;
-      box-shadow: 0 2px 10px #0f3460;
-    }
-    main {
-      padding: 2rem;
-      max-width: 700px;
-      width: 90vw;
-      background: #0f3460;
-      border-radius: 10px;
-      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.7);
-      margin-top: 1.5rem;
-    }
-    form {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem 1.5rem;
-    }
-    label {
-      display: flex;
-      flex-direction: column;
-      font-size: 0.9rem;
-      margin-bottom: 0.3rem;
-      color: #ccd6f6;
-    }
-    input[type="number"],
-    select {
-      padding: 0.5rem;
-      font-size: 1rem;
-      border-radius: 6px;
-      border: none;
-      outline: none;
-      font-family: inherit;
-    }
-    button {
-      grid-column: span 2;
-      padding: 0.75rem;
-      font-size: 1.1rem;
-      border-radius: 6px;
-      background-color: #e94560;
-      border: none;
-      color: white;
-      cursor: pointer;
-      font-weight: 600;
-      transition: background-color 0.3s ease;
-    }
-    button:hover {
-      background-color: #ff3366;
-    }
-    .result {
-      margin-top: 1.5rem;
-      font-size: 1.2rem;
-      color: #00d084;
-      text-align: center;
-      font-weight: 600;
-    }
-    .conf-matrix {
-      margin-top: 2rem;
-      text-align: center;
-    }
-    .conf-matrix img {
-      width: 230px;
-      border-radius: 12px;
-      box-shadow: 0 6px 25px rgba(233, 69, 96, 0.5);
-    }
-    @media (max-width: 600px) {
-      form {
-        grid-template-columns: 1fr;
-      }
-      button {
-        grid-column: span 1;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intrusion Detection System</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 1em 0;
+            text-align: center;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        main {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .input-section, .result-section {
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, select {
+            width: calc(100% - 22px); /* Adjusted for padding */
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            box-sizing: border-box;
+            font-size: 0.95em;
+        }
+        button {
+            background-color: #5cb85c;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #4cae4c;
+        }
+        #loading {
+            color: #007bff;
+            font-style: italic;
+            text-align: center;
+            display: none; /* Hidden by default */
+            margin-top: 10px;
+        }
+        .prediction {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .prediction.normal {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .prediction.attack {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .error-message {
+            color: red;
+            font-weight: bold;
+            margin-top: 10px;
+            text-align: center;
+        }
+        .confusion-matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .confusion-matrix-table th, .confusion-matrix-table td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+        }
+        .confusion-matrix-table th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #777;
+            font-size: 0.9em;
+        }
+        div.form-group {
+            margin-bottom: 15px;
+        }
+    </style>
 </head>
 <body>
-  <header>Intrusion Detection System (IDS) Dashboard</header>
-  <main>
-    <h2>Input Network Traffic Features</h2>
-    <form method="POST" action="/predict">
-      {% for feature in features %}
-        <label>{{ feature }}
-          {% if feature in ['protocol_type', 'service', 'flag'] %}
-            <select name="{{ feature }}" required>
-              {% if feature == 'protocol_type' %}
-                <option value="0">icmp</option>
-                <option value="1">tcp</option>
-                <option value="2">udp</option>
-              {% elif feature == 'service' %}
-                <!-- Some common services simplified -->
-                <option value="0">http</option>
-                <option value="1">smtp</option>
-                <option value="2">ftp_data</option>
-                <option value="3">other</option>
-              {% elif feature == 'flag' %}
-                <option value="0">SF</option>
-                <option value="1">S0</option>
-                <option value="2">REJ</option>
-                <option value="3">RSTR</option>
-              {% endif %}
-            </select>
-          {% else %}
-            <input type="number" step="any" name="{{ feature }}" required />
-          {% endif %}
-        </label>
-      {% endfor %}
-      <button type="submit">Detect Intrusion</button>
-    </form>
+    <header>
+        <h1>Network Intrusion Detection System</h1>
+        <p>Enter network traffic features to predict if it's an intrusion.</p>
+    </header>
+    <main>
+        <section class="input-section">
+            <h2>Enter Network Traffic Features</h2>
+            <form id="predictionForm">
+                {% for feature in features %}
+                <div class="form-group">
+                    <label for="{{ feature }}">{{ feature | replace('_', ' ') | capitalize }}:</label>
+                    {% if feature == 'protocol_type' %}
+                    <select id="{{ feature }}" name="{{ feature }}" required>
+                        <option value="tcp">TCP</option>
+                        <option value="udp">UDP</option>
+                        <option value="icmp">ICMP</option>
+                    </select>
+                    {% elif feature == 'service' %}
+                    <select id="{{ feature }}" name="{{ feature }}" required>
+                        <option value="http">http</option>
+                        <option value="ftp">ftp</option>
+                        <option value="smtp">smtp</option>
+                        <option value="dns">dns</option>
+                        <option value="private">private</option>
+                        <option value="other">other</option>
+                        </select>
+                    {% elif feature == 'flag' %}
+                    <select id="{{ feature }}" name="{{ feature }}" required>
+                        <option value="SF">SF</option>
+                        <option value="S0">S0</option>
+                        <option value="REJ">REJ</option>
+                        <option value="RSTR">RSTR</option>
+                        <option value="RSTO">RSTO</option>
+                        <option value="SH">SH</option>
+                        <option value="OTH">OTH</option>
+                        <option value="RSTOS0">RSTOS0</option>
+                        <option value="Oth">Oth</option>
+                    </select>
+                    {% else %}
+                    <input type="number" id="{{ feature }}" name="{{ feature }}" required min="0" {% if feature in ['serror_rate', 'srv_serror_rate', 'rerror_rate', 'srv_rerror_rate', 'same_srv_rate', 'diff_srv_rate', 'srv_diff_host_rate', 'dst_host_same_srv_rate', 'dst_host_diff_srv_rate'] %}step="0.01" max="1" {% endif %}>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                <button type="submit">Predict</button>
+            </form>
+        </section>
 
-    {% if prediction is not none %}
-      <div class="result">
-        <p><strong>Prediction Result:</strong> {{ 'Attack Detected!' if prediction == 1 else 'Normal Traffic' }}</p>
-      </div>
-    {% endif %}
+        <section class="result-section">
+            <h2>Prediction Result</h2>
+            <p id="loading" style="display: none;">Processing prediction, please wait...</p>
+            <div id="predictionResult">
+                </div>
 
-    <div class="conf-matrix">
-      <h3>Model Confusion Matrix</h3>
-      <img src="data:image/png;base64,{{ conf_matrix_img }}" alt="Confusion Matrix" />
-    </div>
-  </main>
+            <h2>Model Performance</h2>
+            <div id="confusionMatrix">
+                {% if conf_matrix_img %}
+                <img src="data:image/png;base64,{{ conf_matrix_img }}" alt="Confusion Matrix" style="max-width: 100%; height: auto; display: block; margin: 10px auto;">
+                {% else %}
+                <p>Confusion matrix will appear here after model training.</p>
+                {% endif %}
+            </div>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2025 Intrusion Detection System</p>
+    </footer>
+
+    <script>
+        document.getElementById('predictionForm').addEventListener('submit', async function(event) {
+            event.preventDefault(); // Prevent default form submission (page reload)
+
+            const form = event.target;
+            const formData = new FormData(form);
+            // Convert FormData to a plain JavaScript object
+            const data = Object.fromEntries(formData.entries());
+
+            const loadingDiv = document.getElementById('loading');
+            const predictionResultDiv = document.getElementById('predictionResult');
+
+            // Clear previous results and show loading indicator
+            predictionResultDiv.innerHTML = '';
+            loadingDiv.style.display = 'block';
+
+            try {
+                // Send data to Flask backend using AJAX
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json' // <--- THIS IS THE CRUCIAL LINE
+                    },
+                    body: JSON.stringify(data) // Send data as JSON string
+                });
+
+                const result = await response.json(); // Parse JSON response from Flask
+
+                loadingDiv.style.display = 'none'; // Hide loading indicator
+
+                if (response.ok) { // Check if the HTTP status code is 2xx
+                    const predictionText = result.prediction === 1 ? 'Attack Detected!' : 'Normal Traffic';
+                    const predictionClass = result.prediction === 1 ? 'attack' : 'normal';
+
+                    predictionResultDiv.innerHTML = `
+                        <p class="prediction ${predictionClass}">The network traffic is predicted as: <strong>${predictionText}</strong></p>
+                    `;
+                } else {
+                    // Handle errors from the Flask backend
+                    predictionResultDiv.innerHTML = `<p class="error-message">Error: ${result.error || 'Something went wrong!'}</p>`;
+                }
+
+            } catch (error) {
+                // Handle network errors or other client-side issues
+                loadingDiv.style.display = 'none';
+                predictionResultDiv.innerHTML = `<p class="error-message">An error occurred: ${error.message}. Please check your server and network connection.</p>`;
+                console.error('Fetch error:', error);
+            }
+        });
+    </script>
 </body>
 </html>
 
