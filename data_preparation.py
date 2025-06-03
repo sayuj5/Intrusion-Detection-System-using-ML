@@ -41,3 +41,4 @@ def load_and_preprocess_data():
     X_scaled = scaler.fit_transform(X)
 
     return X_scaled, y, scaler, features
+
