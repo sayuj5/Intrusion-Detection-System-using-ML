@@ -184,6 +184,7 @@ To simulate and test real-time detection:
 8.6.3 Observe alerts and statistics updating in real-time on your dashboard.
 
 9 Project Team
+
 Sayuj Sur: Head & Machine Learning Specialist
 
 Mabud Munshi: Backend Developer
@@ -193,6 +194,7 @@ Md. Mehetab Baidya: Frontend Developer / UI/UX & Performer
 Ujjwal Kumar Mishra: Documentation & Reporting
 
 10 Future Scope
+
 Advanced Threat Intelligence: Integration with external threat feeds and dynamic blacklist/whitelist features.
 
 Deep Learning Models: Exploration of more complex neural network architectures for enhanced detection capabilities.
@@ -207,5 +209,6 @@ Enhanced UI/UX: Further dashboard refinements, custom alert thresholds, and adva
 
 Protocol-Aware Analysis: Deeper analysis of application-layer protocols for nuanced threat detection.
 
-License
+11 License
+
 This project is licensed under the MIT License(LICENSE.md) - see the LICENSE.md file for details.
