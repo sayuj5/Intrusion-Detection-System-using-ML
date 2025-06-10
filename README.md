@@ -26,7 +26,7 @@ NetSentinel stands as a cutting-edge Machine Learning-Based Intrusion Detection 
 
 Beyond conventional monitoring, NetSentinel actively analyzes live network traffic, leveraging its advanced machine learning capabilities to swiftly discern between benign and malicious activities. It proactively identifies diverse attack vectors, from subtle anomalies to overt brute-force attempts like SSH attacks, presenting critical insights through an intuitive, real-time dashboard. Furthermore, the system rigorously logs every session, generating comprehensive historical reports vital for forensic analysis and robust security posture enhancement. NetSentinel redefines network defense by providing unparalleled visibility, automated threat intelligence, and a vigilant, adaptive shield against the digital landscape's persistent challenges.
 
-2. Features
+2 Features
 2.1 Real-time Packet Sniffing: Captures live network traffic for continuous monitoring.
 2.2 Machine Learning-Based Detection: Utilizes a Random Forest classifier to detect anomalies and potential intrusions.
 2.3 Rule-Based Attack Identification: Identifies specific attack types (e.g., SSH attempts) using predefined rules.
@@ -35,7 +35,7 @@ Beyond conventional monitoring, NetSentinel actively analyzes live network traff
 2.6 Historical Reporting: Generates and stores detailed reports for each sniffing session, enabling retrospective analysis.
 2.7 Manual Detection Panel: Allows users to input network features manually to test the ML model's prediction capabilities on demand.
 
-3. Technologies Used
+3 Technologies Used
 3.1 Backend & ML:
 
 3.1.1 Python (3.8+)
@@ -62,18 +62,18 @@ Beyond conventional monitoring, NetSentinel actively analyzes live network traff
 3.4 Data Storage:
 JSON (reports.json for session history)
 
-4. Dataset Used
+4 Dataset Used
 The core machine learning model within NetSentinel is comprehensively trained on the NSL-KDD dataset.
 
 Characteristics: NSL-KDD is a widely recognized benchmark dataset for Intrusion Detection Systems (IDS) evaluation. It is a refined version of the KDD Cup '99 dataset, addressing its limitations such as redundant records and disproportionate class distribution. It contains diverse network connection records, each meticulously labeled as either 'normal' traffic or various 'attack' types (e.g., Denial of Service - DoS, Probe, User-to-Root - U2R, Remote-to-Local - R2L). This rich dataset enables the Random Forest model to learn intricate patterns associated with network intrusions effectively.
 
-5. Machine Learning Model
+5 Machine Learning Model
 The heart of NetSentinel's detection capability is the Random Forest Classifier:
 5.1 Ensemble Learning: This algorithm builds a multitude of individual decision trees during training. Each tree is trained on a random subset of the data and features.
 5.2 Robust Classification: For incoming network traffic, each tree makes its own prediction. The final classification (e.g., 'Normal Traffic' or 'Attack Detected!') is determined by a majority vote among all the trees.
 5.3 Key Advantages: Random Forests are highly accurate, robust to overfitting, can handle high-dimensional data, and are effective with imbalanced datasets (crucial for IDS where attacks are rare) when configured with class_weight='balanced'.
 
-6. System Architecture
+6 System Architecture
 NetSentinel operates through an integrated workflow:
 
 6.1 Offline Training: The Random Forest model is trained using the NSL-KDD dataset. The trained model and preprocessing artifacts (scaler, encoders) are saved.
@@ -83,7 +83,7 @@ NetSentinel operates through an integrated workflow:
 6.5 Dynamic Dashboard: Using WebSockets (Flask-SocketIO), app.py pushes live updates to the index.html web dashboard, providing instant visualizations.
 6.6 Historical Reporting: Upon session termination, app.py compiles and saves a detailed report (including raw packets and alerts) to reports.json.
 
-7. Installation & Setup
+7 Installation & Setup
 Follow these steps to get NetSentinel up and running on your local machine:
 
 7.1 Clone the Repository:
@@ -108,7 +108,7 @@ pip install -r requirements.txt
 7.5 Verify Installations (Optional):
 pip freeze
 
-8. Usage
+8 Usage
 8.1 Running the Application
 8.1.1 Train the Machine Learning Model:
 8.1.2 Open your terminal/command prompt and navigate to the project's root directory.
@@ -148,7 +148,7 @@ To simulate and test real-time detection:
 8.6.2 Use external tools (e.g., Nmap for port scans, Hydra for SSH brute-force) from another machine (e.g., a Kali Linux VM on the same network) to generate malicious traffic targeting the NetSentinel host.
 8.6.3 Observe alerts and statistics updating in real-time on your dashboard.
 
-9. Project Team
+9 Project Team
 Sayuj Sur: Head & Machine Learning Specialist
 
 Mabud Munshi: Backend Developer
@@ -157,7 +157,7 @@ Md. Mehetab Baidya: Frontend Developer / UI/UX & Performer
 
 Ujjwal Kumar Mishra: Documentation & Reporting
 
-10. Future Scope
+10 Future Scope
 Advanced Threat Intelligence: Integration with external threat feeds and dynamic blacklist/whitelist features.
 Deep Learning Models: Exploration of more complex neural network architectures for enhanced detection capabilities.
 Automated Response: Implementation of active response mechanisms (e.g., blocking IPs, isolating hosts).
