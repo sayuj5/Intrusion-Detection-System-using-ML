@@ -102,8 +102,8 @@ NetSentinel operates through an integrated workflow:
 Follow these steps to get NetSentinel up and running on your local machine:
 
 7.1 Clone the Repository:
-git clone https://github.com/your-username/NetSentinel-IDS.git
-cd NetSentinel-IDS
+git clone https://github.com/sayuj5/Intrusion-Detection-System-using-ML.git
+cd Intrusion-Detection-System-using-ML
 
 7.2 Install Npcap (Windows Only):
 If you are on Windows, download and install the latest Npcap from https://nmap.org/npcap/.
