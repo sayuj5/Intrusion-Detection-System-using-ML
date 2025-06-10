@@ -3,235 +3,1416 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Intrusion Detection System</title>
+    <title>Security Event Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Chart.js for charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Leaflet for map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <style>
+        html, body {
+            height: 100%; 
+            margin: 0;
+            padding: 0;
+            overflow: hidden; 
+        }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 20px;
-            background-color: #f4f4f4;
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; 
             color: #333;
+            display: flex; 
+            flex-direction: column; 
         }
-        header {
-            background-color: #333;
-            color: #fff;
-            padding: 1em 0;
-            text-align: center;
-            margin-bottom: 20px;
-            border-radius: 5px;
-        }
-        main {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        .input-section, .result-section {
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #555;
-        }
-        input, select {
-            width: calc(100% - 22px); /* Adjusted for padding */
-            padding: 10px;
-            margin-bottom: 10px;
-            border: 1px solid #ccc;
-            border-radius: 3px;
-            box-sizing: border-box;
-            font-size: 0.95em;
-        }
-        button {
-            background-color: #5cb85c;
+        /* Top Navigation Bar */
+        .header-nav {
+            background-color: #37474f; 
             color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 5px;
+            padding: 0.5rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0; 
+        }
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .header-tabs {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .header-tab-item {
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.5rem;
             cursor: pointer;
-            font-size: 1em;
-            transition: background-color 0.3s ease;
+            transition: background-color 0.2s, color 0.2s;
+            font-weight: 500;
+            color: #cfd8dc; 
         }
-        button:hover {
-            background-color: #4cae4c;
+        .header-tab-item:hover {
+            background-color: #455a64; 
         }
-        #loading {
-            color: #007bff;
-            font-style: italic;
-            text-align: center;
-            display: none; /* Hidden by default */
-            margin-top: 10px;
+        .header-tab-item.active {
+            background-color: #4caf50; 
+            color: white;
         }
-        .prediction {
-            font-size: 1.2em;
+
+        /* Main content area: IMPORTANT CHANGES FOR SCROLLING */
+        .main-content-area {
+            flex-grow: 1; 
+            overflow: hidden; 
+            display: flex; 
+            flex-direction: column; 
+            height: 0; 
+            padding: 1.5rem; 
+            box-sizing: border-box; 
+        }
+
+        /* Essential for tab switching: Hide inactive tab content */
+        .tab-content.hidden {
+            display: none;
+        }
+        /* Ensure active tab takes available height and scrolls its own content */
+        .tab-content.active {
+            display: block; 
+            flex-grow: 1; 
+            overflow-y: auto; 
+        }
+
+        /* Card styles (similar to your images) */
+        .card {
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem; 
+        }
+        /* Specific card colors for dashboard overview */
+        .card-green {
+            background-color: #e8f5e9; 
+            color: #2e7d32; 
+        }
+        .card-red {
+            background-color: #ffebee; 
+            color: #c62828; 
+        }
+        .card-value {
+            font-size: 3rem; 
             font-weight: bold;
-            margin-top: 10px;
-            padding: 10px;
-            border-radius: 5px;
-            text-align: center;
+            line-height: 1; 
         }
-        .prediction.normal {
-            background-color: #d4edda;
-            color: #155724;
+        .card-label {
+            font-size: 1.125rem; 
+            font-weight: 600;
+            margin-bottom: 0.5rem;
         }
-        .prediction.attack {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-        .error-message {
-            color: red;
-            font-weight: bold;
-            margin-top: 10px;
-            text-align: center;
-        }
-        .confusion-matrix-table {
+
+        /* Table styles from images */
+        table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
+            text-align: left;
+            font-size: 0.9rem;
         }
-        .confusion-matrix-table th, .confusion-matrix-table td {
-            border: 1px solid #ccc;
-            padding: 8px;
-            text-align: center;
+        th, td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #e0e0e0; 
         }
-        .confusion-matrix-table th {
-            background-color: #f0f0f0;
+        th {
+            background-color: #e0e0e0; 
+            font-weight: 600;
+            color: #333;
+            text-transform: uppercase;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #f9f9f9; 
+        }
+        tbody tr:hover {
+            background-color: #e8f5e9; 
+        }
+
+        /* Map specific styles: Fixed height to prevent jumping */
+        #map {
+            height: 400px; 
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background-color: #e0e0e0;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            width: 90%;
+            max-width: 800px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+        .close-button {
+            position: absolute;
+            top: 1rem;
+            right: 1.5rem;
+            color: #888;
+            font-size: 2rem;
             font-weight: bold;
+            cursor: pointer;
+            transition: color 0.2s;
         }
-        footer {
+        .close-button:hover,
+        .close-button:focus {
+            color: #333;
+        }
+        .modal-body pre {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            border-radius: 0.25rem;
+            overflow-x: auto;
+            white-space: pre-wrap; 
+            word-break: break-all; 
+        }
+
+        /* General heading styles */
+        h2 {
+            font-size: 2.25rem; 
+            font-weight: 700; 
+            margin-bottom: 2rem; 
+            color: #333;
+        }
+        h3 {
+            font-size: 1.5rem; 
+            font-weight: 600; 
+            color: #333;
+            margin-bottom: 1rem;
+        }
+        h4 {
+            font-size: 1.25rem; 
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.75rem;
+        }
+        p {
+            color: #555;
+        }
+
+        /* Button styles */
+        button {
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem;
+            font-weight: 600;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .btn-blue {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .btn-blue:hover {
+            background-color: #2563eb;
+        }
+        .btn-green {
+            background-color: #4CAF50; 
+            color: white;
+        }
+        .btn-green:hover {
+            background-color: #45a049;
+        }
+
+        /* Manual Testing Form Styles */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #555;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ccc;
+            border-radius: 0.25rem;
+            box-sizing: border-box; 
+            font-size: 1rem;
+        }
+        .prediction-result-box {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-weight: bold;
             text-align: center;
-            margin-top: 20px;
-            color: #777;
-            font-size: 0.9em;
+            margin-top: 1.5rem;
         }
-        div.form-group {
-            margin-bottom: 15px;
+        .prediction-result-normal {
+            background-color: #e8f5e9; 
+            color: #2e7d32; 
+        }
+        .prediction-result-attack {
+            background-color: #ffebee; 
+            color: #c62828; 
+        }
+        /* Adjusted height for Prediction Pie Chart */
+        #predictionPieChartContainer {
+            min-height: 180px; 
+            max-height: 250px; 
+            display: flex; 
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        #predictionPieChart {
+            max-width: 100%; 
+            height: auto; 
+            flex-grow: 1; 
         }
     </style>
 </head>
-<body>
-    <header>
-        <h1>Network Intrusion Detection System</h1>
-        <p>Enter network traffic features to predict if it's an intrusion.</p>
+<body class="flex flex-col">
+
+    <!-- Header Navigation Bar -->
+    <header class="header-nav">
+        <div class="header-title">Security Event Manager</div>
+        <nav class="header-tabs">
+            <div class="header-tab-item active" onclick="showTab('dashboard', this)">Dashboard</div>
+            <div class="header-tab-item" onclick="showTab('events', this)">Events</div>
+            <div class="header-tab-item" onclick="showTab('live-traffic', this)">Live Traffic</div>
+            <div class="header-tab-item" onclick="showTab('reports', this)">Reports</div>
+            <div class="header-tab-item" onclick="showTab('manual-test', this)">Manual Test</div> 
+            <div class="header-tab-item" onclick="showTab('cases', this)">Cases</div>
+        </nav>
     </header>
-    <main>
-        <section class="input-section">
-            <h2>Enter Network Traffic Features</h2>
-            <form id="predictionForm">
-                {% for feature in features %}
-                <div class="form-group">
-                    <label for="{{ feature }}">{{ feature | replace('_', ' ') | capitalize }}:</label>
-                    {% if feature == 'protocol_type' %}
-                    <select id="{{ feature }}" name="{{ feature }}" required>
-                        <option value="tcp">TCP</option>
-                        <option value="udp">UDP</option>
-                        <option value="icmp">ICMP</option>
-                    </select>
-                    {% elif feature == 'service' %}
-                    <select id="{{ feature }}" name="{{ feature }}" required>
-                        <option value="http">http</option>
-                        <option value="ftp">ftp</option>
-                        <option value="smtp">smtp</option>
-                        <option value="dns">dns</option>
-                        <option value="private">private</option>
-                        <option value="other">other</option>
-                        </select>
-                    {% elif feature == 'flag' %}
-                    <select id="{{ feature }}" name="{{ feature }}" required>
-                        <option value="SF">SF</option>
-                        <option value="S0">S0</option>
-                        <option value="REJ">REJ</option>
-                        <option value="RSTR">RSTR</option>
-                        <option value="RSTO">RSTO</option>
-                        <option value="SH">SH</option>
-                        <option value="OTH">OTH</option>
-                        <option value="RSTOS0">RSTOS0</option>
-                        <option value="Oth">Oth</option>
-                    </select>
-                    {% else %}
-                    <input type="number" id="{{ feature }}" name="{{ feature }}" required min="0" {% if feature in ['serror_rate', 'srv_serror_rate', 'rerror_rate', 'srv_rerror_rate', 'same_srv_rate', 'diff_srv_rate', 'srv_diff_host_rate', 'dst_host_same_srv_rate', 'dst_host_diff_srv_rate'] %}step="0.01" max="1" {% endif %}>
-                    {% endif %}
+
+    <!-- Main Content Area: Each section below corresponds to a tab and is hidden/shown by JavaScript -->
+    <main class="main-content-area">
+
+        <!-- Dashboard Tab Content -->
+        <section id="dashboard-tab" class="tab-content active">
+            <h2 class="text-4xl font-bold mb-8 text-gray-800">Network Intrusion Detection Dashboard</h2>
+            
+            <!-- Top Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="card card-green p-6 text-center">
+                    <p class="card-label">Total Packets Analyzed</p>
+                    <p id="total-packets" class="card-value">0</p>
                 </div>
-                {% endfor %}
-                <button type="submit">Predict</button>
-            </form>
+                <div class="card card-red p-6 text-center">
+                    <p class="card-label">Total Intrusions Detected</p>
+                    <p id="total-intrusions" class="card-value">0</p>
+                </div>
+                <div class="card card-green p-6 text-center">
+                    <p class="card-label">Intrusion Rate</p>
+                    <p id="intrusion-rate" class="card-value">0.00%</p>
+                </div>
+            </div>
+
+            <!-- Session ID Card -->
+            <div class="card p-6 mb-8">
+                <h3 class="text-xl font-semibold text-gray-600 mb-2">Current Sniffer Session ID</h3>
+                <p id="current-session-id" class="text-2xl font-bold text-gray-800 break-all">Awaiting Sniffer...</p>
+                <p class="text-sm text-gray-500 mt-2">This ID represents the currently active sniffing session. Live data is displayed here. For historical data, check the 'Reports' tab after stopping the sniffer.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div class="card p-6">
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-4">All Alert Source Locations</h3>
+                    <div id="map"></div>
+                </div>
+                <div class="card p-6">
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-4">Top Attacks</h3>
+                    <div style="min-height: 250px;"><canvas id="attackChart"></canvas></div>
+                </div>
+            </div>
+
+            <!-- New Charts below map and top attacks -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div class="card p-6">
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-4">Top Attacker IP Addresses</h3>
+                    <div style="min-height: 250px;"><canvas id="topAttackerIPChart"></canvas></div>
+                </div>
+                <div class="card p-6">
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-4">Recent Intrusion Alerts Over Time</h3>
+                    <div style="min-height: 250px;"><canvas id="intrusionsOverTimeChart"></canvas></div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="card p-6">
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-4">Failed SSH Logins (Simulated)</h3>
+                    <div style="min-height: 250px;"><canvas id="failedSSHLoginsChart"></canvas></div>
+                </div>
+                <!-- You can add another chart or content card here if needed -->
+            </div>
+
         </section>
 
-        <section class="result-section">
-            <h2>Prediction Result</h2>
-            <p id="loading" style="display: none;">Processing prediction, please wait...</p>
-            <div id="predictionResult">
+        <!-- Intrusion Events Tab Content -->
+        <section id="events-tab" class="tab-content hidden">
+            <h2 class="text-4xl font-bold mb-8 text-gray-800">Recent Intrusion Events</h2>
+            <p class="text-gray-600 mb-4">This section displays a detailed log of **live** detected intrusion events. Data clears when the sniffer stops.</p>
+            <div class="card p-6 overflow-x-auto">
+                <table id="events-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Prediction</th>
+                            <th>Attack Type</th>
+                            <th>Source IP</th>
+                            <th>Destination IP</th>
+                            <th>Source Location</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Event rows will be inserted here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Live Traffic Tab Content -->
+        <section id="live-traffic-tab" class="tab-content hidden">
+            <h2 class="text-4xl font-bold mb-8 text-gray-800">Live Network Traffic Feed</h2>
+            <p class="text-gray-600 mb-4">This section displays a real-time stream of captured network packets. Data clears when the sniffer stops.</p>
+            <div class="card p-6 overflow-x-auto">
+                <table id="live-traffic-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Source IP</th>
+                            <th>Destination IP</th>
+                            <th>Protocol</th>
+                            <th>Source Port</th>
+                            <th>Destination Port</th>
+                            <th>Length</th>
+                            <th>Event Type</th>
+                            <th>Signature</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Live traffic rows will be inserted here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Reports Tab Content -->
+        <section id="reports-tab" class="tab-content hidden">
+            <h2 class="text-4xl font-bold mb-8 text-gray-800">Historical Reports</h2>
+            <p class="text-gray-600 mb-4">This section contains summaries of **past sniffing sessions**. Click 'View Details' to see full events from a session.</p>
+            <div class="card p-6 overflow-x-auto">
+                <table id="reports-table">
+                    <thead>
+                        <tr>
+                            <th>Session ID</th>
+                            <th>Start Time</th>
+                            <th>End Time</th>
+                            <th>Total Packets</th>
+                            <th>Total Intrusions</th>
+                            <th>Top Attacks</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Reports will be loaded here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Manual Test Tab Content -->
+        <section id="manual-test-tab" class="tab-content hidden">
+            <h2 class="text-4xl font-bold mb-8 text-gray-800">Manual Traffic Testing</h2>
+            <p class="text-gray-600 mb-4">Enter network traffic features below to manually test the intrusion detection model.</p>
+            
+            <div class="card p-6">
+                <h3 class="text-2xl font-semibold text-gray-800 mb-4">Enter Network Traffic Features</h3>
+                <form id="predictionForm" onsubmit="event.preventDefault(); predictTraffic();">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        
+                        <!-- duration -->
+                        <div class="form-group">
+                            <label for="duration">Duration:</label>
+                            <input type="number" id="duration" name="duration" value="0" min="0" step="any">
+                        </div>
+                        
+                        <!-- protocol_type -->
+                        <div class="form-group">
+                            <label for="protocol_type">Protocol Type:</label>
+                            <select id="protocol_type" name="protocol_type">
+                                <option value="tcp">TCP</option>
+                                <option value="udp">UDP</option>
+                                <option value="icmp">ICMP</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+
+                        <!-- service -->
+                        <div class="form-group">
+                            <label for="service">Service:</label>
+                            <select id="service" name="service">
+                                <option value="http">HTTP</option>
+                                <option value="ftp">FTP</option>
+                                <option value="smtp">SMTP</option>
+                                <option value="ssh">SSH</option>
+                                <option value="dns">DNS</option>
+                                <option value="telnet">Telnet</option>
+                                <option value="pop3">POP3</option>
+                                <option value="ecr_i">ICMP Echo Request</option>
+                                <option value="finger">Finger</option>
+                                <option value="domain_udp">Domain UDP</option>
+                                <option value="auth">Auth</option>
+                                <option value="private">Private</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <!-- flag -->
+                        <div class="form-group">
+                            <label for="flag">Flag:</label>
+                            <select id="flag" name="flag">
+                                <option value="SF">SF (Normal Est. Connection)</option>
+                                <option value="S0">S0 (Connection Rejected)</option>
+                                <option value="REJ">REJ (Connection Refused)</option>
+                                <option value="RSTO">RSTO (Orig. Reset)</option>
+                                <option value="RSTOS0">RSTOS0 (Conn. Timeout)</option>
+                                <option value="RSTR">RSTR (Resp. Reset)</option>
+                                <option value="S1">S1 (SYN, No ACK)</option>
+                                <option value="S2">S2 (SYN, ACK, No ACK)</option>
+                                <option value="S3">S3 (FIN, No ACK)</option>
+                                <option value="SH">SH (Half-Open)</option>
+                                <option value="OTH">OTH (Other)</option>
+                            </select>
+                        </div>
+
+                        <!-- src_bytes -->
+                        <div class="form-group">
+                            <label for="src_bytes">Source Bytes:</label>
+                            <input type="number" id="src_bytes" name="src_bytes" value="0" min="0" step="1">
+                        </div>
+
+                        <!-- dst_bytes -->
+                        <div class="form-group">
+                            <label for="dst_bytes">Destination Bytes:</label>
+                            <input type="number" id="dst_bytes" name="dst_bytes" value="0" min="0" step="1">
+                        </div>
+
+                        <!-- count -->
+                        <div class="form-group">
+                            <label for="count">Count (Connections to same host/svc):</label>
+                            <input type="number" id="count" name="count" value="1" min="0" step="1">
+                        </div>
+
+                        <!-- srv_count -->
+                        <div class="form-group">
+                            <label for="srv_count">Service Count (Connections to same service):</label>
+                            <input type="number" id="srv_count" name="srv_count" value="1" min="0" step="1">
+                        </div>
+
+                        <!-- serror_rate -->
+                        <div class="form-group">
+                            <label for="serror_rate">SYN Error Rate (Current connection):</label>
+                            <input type="number" id="serror_rate" name="serror_rate" value="0.0" min="0" max="1" step="0.01">
+                        </div>
+
+                        <!-- srv_serror_rate -->
+                        <div class="form-group">
+                            <label for="srv_serror_rate">Service SYN Error Rate:</label>
+                            <input type="number" id="srv_serror_rate" name="srv_serror_rate" value="0.0" min="0" max="1" step="0.01">
+                        </div>
+
+                        <!-- rerror_rate -->
+                        <div class="form-group">
+                            <label for="rerror_rate">Reject Error Rate (Current connection):</label>
+                            <input type="number" id="rerror_rate" name="rerror_rate" value="0.0" min="0" max="1" step="0.01">
+                        </div>
+
+                        <!-- srv_rerror_rate -->
+                        <div class="form-group">
+                            <label for="srv_rerror_rate">Service Reject Error Rate:</label>
+                            <input type="number" id="srv_rerror_rate" name="srv_rerror_rate" value="0.0" min="0" max="1" step="0.01">
+                        </div>
+
+                        <!-- same_srv_rate -->
+                        <div class="form-group">
+                            <label for="same_srv_rate">Same Service Rate:</label>
+                            <input type="number" id="same_srv_rate" name="same_srv_rate" value="1.0" min="0" max="1" step="0.01">
+                        </div>
+
+                        <!-- diff_srv_rate -->
+                        <div class="form-group">
+                            <label for="diff_srv_rate">Different Service Rate:</label>
+                            <input type="number" id="diff_srv_rate" name="diff_srv_rate" value="0.0" min="0" max="1" step="0.01">
+                        </div>
+
+                        <!-- srv_diff_host_rate -->
+                        <div class="form-group">
+                            <label for="srv_diff_host_rate">Service Different Host Rate:</label>
+                            <input type="number" id="srv_diff_host_rate" name="srv_diff_host_rate" value="0.0" min="0" max="1" step="0.01">
+                        </div>
+
+                        <!-- dst_host_count -->
+                        <div class="form-group">
+                            <label for="dst_host_count">Destination Host Count:</label>
+                            <input type="number" id="dst_host_count" name="dst_host_count" value="1" min="0" step="1">
+                        </div>
+
+                        <!-- dst_host_srv_count -->
+                        <div class="form-group">
+                            <label for="dst_host_srv_count">Destination Host Service Count:</label>
+                            <input type="number" id="dst_host_srv_count" name="dst_host_srv_count" value="1" min="0" step="1">
+                        </div>
+
+                        <!-- dst_host_same_srv_rate -->
+                        <div class="form-group">
+                            <label for="dst_host_same_srv_rate">Destination Host Same Service Rate:</label>
+                            <input type="number" id="dst_host_same_srv_rate" name="dst_host_same_srv_rate" value="1.0" min="0" max="1" step="0.01">
+                        </div>
+
+                        <!-- dst_host_diff_srv_rate -->
+                        <div class="form-group">
+                            <label for="dst_host_diff_srv_rate">Destination Host Different Service Rate:</label>
+                            <input type="number" id="dst_host_diff_srv_rate" name="dst_host_diff_srv_rate" value="0.0" min="0" max="1" step="0.01">
+                        </div>
+
+                    </div>
+                    
+                    <button type="submit" class="btn-blue mt-6">Predict</button>
+                </form>
+
+                <div id="predictionResult" class="prediction-result-box mt-8 hidden"></div>
+                
+                <div id="predictionPieChartContainer" class="mt-8 text-center">
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-4">Prediction Overview</h3>
+                    <canvas id="predictionPieChart"></canvas>
                 </div>
 
-            <h2>Model Performance</h2>
-            <div id="confusionMatrix">
-                {% if conf_matrix_img %}
-                <img src="data:image/png;base64,{{ conf_matrix_img }}" alt="Confusion Matrix" style="max-width: 100%; height: auto; display: block; margin: 10px auto;">
-                {% else %}
-                <p>Confusion matrix will appear here after model training.</p>
-                {% endif %}
+                <div id="modelPerformance" class="mt-8 text-center">
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-4">Model Performance (Confusion Matrix)</h3>
+                    <p class="text-sm text-gray-600 mb-4">This matrix shows the general performance of the underlying detection model, updated when `model.py` is run and the Flask app starts.</p>
+                    <div id="confusionMatrixContainer" class="flex justify-center items-center" style="min-height: 250px;">
+                        <!-- Confusion matrix image will be loaded here dynamically -->
+                        <p id="confusionMatrixMessage" class="text-gray-500">Loading confusion matrix...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Cases Tab Content -->
+        <section id="cases-tab" class="tab-content hidden">
+            <h2 class="text-4xl font-bold mb-8 text-gray-800">Security Cases</h2>
+            <p class="text-gray-600 mb-4">This section allows you to manage specific security incidents or cases. (Under Construction)</p>
+            <div class="card p-6">
+                <p class="text-gray-500">No cases currently open.</p>
             </div>
         </section>
     </main>
-    <footer>
-        <p>&copy; 2025 Intrusion Detection System</p>
-    </footer>
+
+    <!-- Report Details Modal -->
+    <div id="report-details-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal()">&times;</span>
+            <h3 class="text-2xl font-bold mb-4 text-gray-800">Report Details for Session: <span id="modal-session-id"></span></h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 text-gray-700">
+                <p><strong>Start Time:</strong> <span id="modal-start-time"></span></p>
+                <p><strong>End Time:</strong> <span id="modal-end-time"></span></p>
+                <p><strong>Total Packets:</strong> <span id="modal-total-packets"></span></p>
+                <p><strong>Total Intrusions:</strong> <span id="modal-total-intrusions"></span></p>
+            </div>
+            
+            <h4 class="text-xl font-semibold mb-2 mt-4 text-gray-800">Intrusion Events during Session:</h4>
+            <div class="overflow-x-auto mb-4">
+                <table id="modal-events-table" class="min-w-full">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Prediction</th>
+                            <th>Attack Type</th>
+                            <th>Source IP</th>
+                            <th>Destination IP</th>
+                            <th>Source Location</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Events will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <h4 class="text-xl font-semibold mb-2 mt-4 text-gray-800">Raw Live Traffic for Session:</h4>
+            <div class="overflow-x-auto">
+                <table id="modal-live-traffic-table" class="min-w-full">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Source IP</th>
+                            <th>Destination IP</th>
+                            <th>Protocol</th>
+                            <th>Source Port</th>
+                            <th>Destination Port</th>
+                            <th>Length</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Raw live traffic will be loaded here -->
+                    </tbody>
+                </table>
+                <p id="modal-live-traffic-message" class="text-center text-gray-500 py-4 hidden">No raw live traffic data available for this report.</p>
+            </div>
+        </div>
+    </div>
+
 
     <script>
-        document.getElementById('predictionForm').addEventListener('submit', async function(event) {
-            event.preventDefault(); // Prevent default form submission (page reload)
+        let attackChartInstance;
+        let topAttackerIPChartInstance;
+        let intrusionsOverTimeChartInstance;
+        let failedSSHLoginsChartInstance;
+        let predictionPieChartInstance; 
+        let map;
+        let markers = L.featureGroup(); 
 
-            const form = event.target;
-            const formData = new FormData(form);
-            // Convert FormData to a plain JavaScript object
-            const data = Object.fromEntries(formData.entries());
+        // Function to switch tabs and update active state in header
+        function showTab(tabId, element) {
+            // Hide all tab content sections
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active'); 
+                tab.classList.add('hidden');    
+            });
 
-            const loadingDiv = document.getElementById('loading');
-            const predictionResultDiv = document.getElementById('predictionResult');
+            // Show the selected tab content section
+            const selectedTabContent = document.getElementById(tabId + '-tab');
+            if (selectedTabContent) {
+                selectedTabContent.classList.remove('hidden'); 
+                selectedTabContent.classList.add('active');    
+            }
 
-            // Clear previous results and show loading indicator
-            predictionResultDiv.innerHTML = '';
-            loadingDiv.style.display = 'block';
+            // Deactivate all tab items in the header navigation
+            document.querySelectorAll('.header-tab-item').forEach(link => {
+                link.classList.remove('active');
+            });
+            // Activate the clicked tab item in the header navigation
+            if (element) {
+                element.classList.add('active'); 
+            } else {
+                const defaultElement = document.querySelector(`.header-tab-item[onclick*="${tabId}"]`);
+                if (defaultElement) {
+                    defaultElement.classList.add('active');
+                }
+            }
 
-            try {
-                // Send data to Flask backend using AJAX
-                const response = await fetch('/predict', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json' // <--- THIS IS THE CRUCIAL LINE
-                    },
-                    body: JSON.stringify(data) // Send data as JSON string
-                });
-
-                const result = await response.json(); // Parse JSON response from Flask
-
-                loadingDiv.style.display = 'none'; // Hide loading indicator
-
-                if (response.ok) { // Check if the HTTP status code is 2xx
-                    const predictionText = result.prediction === 1 ? 'Attack Detected!' : 'Normal Traffic';
-                    const predictionClass = result.prediction === 1 ? 'attack' : 'normal';
-
-                    predictionResultDiv.innerHTML = `
-                        <p class="prediction ${predictionClass}">The network traffic is predicted as: <strong>${predictionText}</strong></p>
-                    `;
+            if (tabId === 'reports') {
+                loadReports(); 
+            } else if (tabId === 'dashboard') {
+                if (map) {
+                    setTimeout(() => {
+                        map.invalidateSize();
+                        if (markers.getLayers().length > 0) {
+                            try {
+                                map.fitBounds(markers.getBounds(), { padding: [50, 50] });
+                            }
+                            catch (e) {
+                                console.warn("Could not fit map bounds after tab switch:", e);
+                                map.setView([20, 0], 2); 
+                            }
+                        } else {
+                            map.setView([20, 0], 2); 
+                        }
+                    }, 100); 
                 } else {
-                    // Handle errors from the Flask backend
-                    predictionResultDiv.innerHTML = `<p class="error-message">Error: ${result.error || 'Something went wrong!'}</p>`;
+                    updateMap([]); 
+                }
+            } else if (tabId === 'manual-test') {
+                loadConfusionMatrix();
+                updatePredictionPieChart('initial'); 
+            }
+        }
+        
+        // Function to update current session ID on the dashboard
+        function updateCurrentSessionId(sessionId) {
+            document.getElementById('current-session-id').textContent = sessionId;
+        }
+
+        // Function to load and display historical reports
+        async function loadReports() {
+            try {
+                const response = await fetch('http://127.0.0.1:5000/get_reports'); 
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const reports = await response.json();
+                const reportsTableBody = document.querySelector('#reports-table tbody');
+                reportsTableBody.innerHTML = ''; 
+
+                if (reports.length === 0) {
+                    reportsTableBody.innerHTML = `<tr><td colspan="7" class="text-center text-gray-500 py-4">No historical reports available.</td></tr>`;
+                    return;
                 }
 
+                reports.sort((a, b) => new Date(b.end_time) - new Date(a.end_time));
+
+                reports.forEach(report => {
+                    const row = reportsTableBody.insertRow();
+                    row.className = 'hover:bg-gray-100';
+
+                    row.insertCell().textContent = report.session_id.substring(0, 8) + '...'; 
+                    row.insertCell().textContent = new Date(report.start_time).toLocaleString();
+                    row.insertCell().textContent = new Date(report.end_time).toLocaleString();
+                    row.insertCell().textContent = report.total_packets;
+                    row.insertCell().textContent = report.total_intrusions;
+                    
+                    const topAttacksCell = row.insertCell();
+                    const topAttacksList = Object.entries(report.top_attacks).map(([type, count]) => `${type} (${count})`).join(', ');
+                    topAttacksCell.textContent = topAttacksList || 'N/A';
+
+                    const actionsCell = row.insertCell();
+                    const viewButton = document.createElement('button');
+                    viewButton.textContent = 'View Details';
+                    viewButton.className = 'btn-blue text-white font-bold py-1 px-3 rounded-md text-sm';
+                    viewButton.onclick = () => showReportDetails(report);
+                    actionsCell.appendChild(viewButton);
+                });
+
             } catch (error) {
-                // Handle network errors or other client-side issues
-                loadingDiv.style.display = 'none';
-                predictionResultDiv.innerHTML = `<p class="error-message">An error occurred: ${error.message}. Please check your server and network connection.</p>`;
-                console.error('Fetch error:', error);
+                console.error('Error loading reports:', error);
+                const reportsTableBody = document.querySelector('#reports-table tbody');
+                reportsTableBody.innerHTML = `<tr><td colspan="7" class="text-center text-red-500 py-4">Failed to load reports.</td></tr>`;
             }
+        }
+
+        // Function to show report details in a modal
+        function showReportDetails(report) {
+            document.getElementById('modal-session-id').textContent = report.session_id;
+            document.getElementById('modal-start-time').textContent = new Date(report.start_time).toLocaleString();
+            document.getElementById('modal-end-time').textContent = new Date(report.end_time).toLocaleString();
+            document.getElementById('modal-total-packets').textContent = report.total_packets;
+            document.getElementById('modal-total-intrusions').textContent = report.total_intrusions;
+
+            const modalEventsTableBody = document.querySelector('#modal-events-table tbody');
+            modalEventsTableBody.innerHTML = ''; 
+
+            if (report.alerts && report.alerts.length > 0) {
+                report.alerts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                report.alerts.forEach(alert => {
+                    const row = modalEventsTableBody.insertRow();
+                    row.className = 'hover:bg-gray-100'; 
+                    row.insertCell().textContent = alert.timestamp;
+                    row.insertCell().textContent = alert.prediction;
+                    row.insertCell().textContent = alert.attack_type;
+                    row.insertCell().textContent = alert.source_ip;
+                    row.insertCell().textContent = alert.destination_ip || 'N/A';
+                    row.insertCell().textContent = alert.source_location;
+                });
+            } else {
+                modalEventsTableBody.innerHTML = `<tr><td colspan="6" class="text-center text-gray-500 py-4">No intrusion events for this session.</td></tr>`;
+            }
+
+            // Populate raw live traffic table
+            const modalLiveTrafficTableBody = document.querySelector('#modal-live-traffic-table tbody');
+            modalLiveTrafficTableBody.innerHTML = ''; 
+            const modalLiveTrafficMessage = document.getElementById('modal-live-traffic-message');
+
+            if (report.raw_live_traffic && report.raw_live_traffic.length > 0) {
+                report.raw_live_traffic.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)); 
+                report.raw_live_traffic.forEach(packet => {
+                    const row = modalLiveTrafficTableBody.insertRow();
+                    row.className = 'hover:bg-gray-100';
+                    row.insertCell().textContent = packet.timestamp;
+                    row.insertCell().textContent = packet.source_ip;
+                    row.insertCell().textContent = packet.destination_ip;
+                    row.insertCell().textContent = packet.protocol;
+                    row.insertCell().textContent = packet.source_port;
+                    row.insertCell().textContent = packet.destination_port;
+                    row.insertCell().textContent = packet.length;
+                });
+                modalLiveTrafficMessage.classList.add('hidden'); 
+            } else {
+                modalLiveTrafficMessage.classList.remove('hidden'); 
+            }
+
+
+            document.getElementById('report-details-modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('report-details-modal').style.display = 'none';
+        }
+
+        // Function to fetch and update dashboard data
+        async function fetchDashboardData() {
+            try {
+                const response = await fetch(`http://127.0.0.1:5000/get_dashboard_data/current`); 
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+
+                document.getElementById('total-packets').textContent = data.total_packets;
+                document.getElementById('total-intrusions').textContent = data.total_intrusions;
+                document.getElementById('intrusion-rate').textContent = `${data.intrusion_rate.toFixed(2)}%`; 
+
+                if (data.active_session_id) {
+                    updateCurrentSessionId(data.active_session_id.substring(0, 8) + '...');
+                } else {
+                     updateCurrentSessionId("No Active Sniffer");
+                }
+
+                updateAttackChart(data.top_attacks);
+                updateTopAttackerIPChart(data.top_attacker_ips);
+                updateIntrusionsOverTimeChart(data.intrusions_over_time);
+                updateFailedSSHLoginsChart(data.failed_ssh_logins);
+
+                updateEventsTable(data.alerts);
+                updateLiveTrafficTable(data.live_traffic);
+
+                updateMap(data.map_data);
+
+            } catch (error) {
+                console.error('Error fetching dashboard data: Failed to connect to Flask server. Please ensure app.py is running on http://127.0.0.1:5000. Full error:', error);
+                document.getElementById('total-packets').textContent = 'Error';
+                document.getElementById('total-intrusions').textContent = 'Error';
+                document.getElementById('intrusion-rate').textContent = 'Error';
+                updateCurrentSessionId("Error Fetching Data");
+            }
+        }
+
+        // Function to update attack chart (Doughnut)
+        function updateAttackChart(topAttacks) {
+            const ctx = document.getElementById('attackChart').getContext('2d');
+            if (attackChartInstance) {
+                attackChartInstance.destroy();
+            }
+
+            const labels = Object.keys(topAttacks);
+            const counts = Object.values(topAttacks);
+
+            attackChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: counts,
+                        backgroundColor: [
+                            '#EF4444', '#F97316', '#F59E0B', '#EAB308', '#84CC16', '#22C55E', '#10B981', '#06B6D4',
+                            '#3B82F6', '#6366F1', '#8B5CF6', '#A855F7', '#D946EF', '#EC4899', '#F43F5E'
+                        ],
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: '#333' 
+                            }
+                        },
+                        title: {
+                            display: false 
+                        }
+                    }
+                }
+            });
+        }
+
+        // Function to update Top Attacker IP Addresses Chart (Bar)
+        function updateTopAttackerIPChart(topAttackerIPs) {
+            const ctx = document.getElementById('topAttackerIPChart').getContext('2d');
+            if (topAttackerIPChartInstance) {
+                topAttackerIPChartInstance.destroy();
+            }
+
+            const labels = Object.keys(topAttackerIPs);
+            const counts = Object.values(topAttackerIPs);
+
+            topAttackerIPChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Number of Attacks',
+                        data: counts,
+                        backgroundColor: '#3b82f6', 
+                        borderColor: '#2563eb',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false 
+                        },
+                        title: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#555' 
+                            },
+                            grid: {
+                                color: '#e0e0e0' 
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#555' 
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Function to update Recent Intrusion Alerts Over Time Chart (Line)
+        function updateIntrusionsOverTimeChart(intrusionsOverTime) {
+            const ctx = document.getElementById('intrusionsOverTimeChart').getContext('2d');
+            if (intrusionsOverTimeChartInstance) {
+                intrusionsOverTimeChartInstance.destroy();
+            }
+
+            const sortedLabels = Object.keys(intrusionsOverTime).sort();
+            const sortedCounts = sortedLabels.map(label => intrusionsOverTime[label]);
+
+            intrusionsOverTimeChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: sortedLabels,
+                    datasets: [{
+                        label: 'Intrusions per Hour',
+                        data: sortedCounts,
+                        borderColor: '#f59e0b', 
+                        backgroundColor: 'rgba(245, 158, 11, 0.2)',
+                        fill: true,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#555'
+                            },
+                            grid: {
+                                color: '#e0e0e0'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#555'
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Function to update Failed SSH Logins Chart (Bar)
+        function updateFailedSSHLoginsChart(failedSSHLogins) {
+            const ctx = document.getElementById('failedSSHLoginsChart').getContext('2d');
+            if (failedSSHLoginsChartInstance) {
+                failedSSHLoginsChartInstance.destroy();
+            }
+
+            const sortedLabels = Object.keys(failedSSHLogins).sort();
+            const sortedCounts = sortedLabels.map(label => failedSSHLogins[label]);
+
+            failedSSHLoginsChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedLabels,
+                    datasets: [{
+                        label: 'Failed Logins',
+                        data: sortedCounts,
+                        backgroundColor: '#dc2626', 
+                        borderColor: '#b91c1c',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#555'
+                            },
+                            grid: {
+                                color: '#e0e0e0'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#555'
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+
+        // Function to update events table
+        function updateEventsTable(alerts) {
+            const eventsTableBody = document.querySelector('#events-table tbody');
+            eventsTableBody.innerHTML = ''; 
+
+            if (alerts.length === 0) {
+                eventsTableBody.innerHTML = `<tr><td colspan="7" class="text-center text-gray-500 py-4">No intrusion events detected yet.</td></tr>`;
+                return;
+            }
+
+            alerts.forEach(alert => { 
+                const row = eventsTableBody.insertRow();
+                row.className = 'hover:bg-gray-100'; 
+
+                row.insertCell().textContent = alert.timestamp;
+                row.insertCell().textContent = alert.prediction;
+                row.insertCell().textContent = alert.attack_type;
+                row.insertCell().textContent = alert.source_ip;
+                row.insertCell().textContent = alert.destination_ip || 'N/A';
+                row.insertCell().textContent = alert.source_location;
+                
+                const detailsCell = row.insertCell();
+                if (alert.details) {
+                    const pre = document.createElement('pre');
+                    pre.className = 'text-xs text-gray-600 whitespace-pre-wrap';
+                    pre.textContent = JSON.stringify(alert.details, null, 2);
+                    detailsCell.appendChild(pre);
+                } else {
+                    detailsCell.textContent = 'N/A';
+                }
+            });
+        }
+
+        // Function to update live traffic table
+        function updateLiveTrafficTable(liveTraffic) {
+            const liveTrafficTableBody = document.querySelector('#live-traffic-table tbody');
+            liveTrafficTableBody.innerHTML = ''; 
+
+            if (liveTraffic.length === 0) {
+                liveTrafficTableBody.innerHTML = `<tr><td colspan="9" class="text-center text-gray-500 py-4">No live traffic data yet.</td></tr>`;
+                return;
+            }
+
+            liveTraffic.forEach(packet => { 
+                const row = liveTrafficTableBody.insertRow();
+                row.className = 'hover:bg-gray-100'; 
+                
+                row.insertCell().textContent = packet.timestamp;
+                row.insertCell().textContent = packet.source_ip;
+                row.insertCell().textContent = packet.destination_ip;
+                row.insertCell().textContent = packet.protocol;
+                row.insertCell().textContent = packet.source_port;
+                row.insertCell().textContent = packet.destination_port;
+                row.insertCell().textContent = packet.length;
+                row.insertCell().textContent = packet.event_type || 'N/A'; 
+                row.insertCell().textContent = packet.alert_signature || 'N/A'; 
+            });
+        }
+
+        // Function to initialize and update map
+        function updateMap(mapData) {
+            if (!map) {
+                map = L.map('map', {
+                    center: [20, 0], 
+                    zoom: 2,
+                    zoomControl: false 
+                });
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
+
+                // Custom zoom controls
+                const customZoomControl = L.control({ position: 'topright' });
+                customZoomControl.onAdd = function (map) {
+                    const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-zoom');
+                    container.innerHTML = `
+                        <a class="leaflet-control-zoom-in" href="#" title="Zoom in" role="button" aria-label="Zoom in">+</a>
+                        <a class="leaflet-control-zoom-out" href="#" title="Zoom out" role="button" aria-label="Zoom out">-</a>
+                    `;
+                    L.DomEvent.on(container.querySelector('.leaflet-control-zoom-in'), 'click', function (e) {
+                        map.zoomIn();
+                        L.DomEvent.stop(e);
+                    });
+                    L.DomEvent.on(container.querySelector('.leaflet-control-zoom-out'), 'click', function (e) {
+                        map.zoomOut();
+                        L.DomEvent.stop(e);
+                    });
+                    return container;
+                };
+                customZoomControl.addTo(map);
+
+                markers.addTo(map); 
+            }
+
+            markers.clearLayers(); 
+
+            mapData.forEach(data => {
+                if (data.lat && data.lon) {
+                    L.marker([data.lat, data.lon])
+                        .bindPopup(`<b>Attack Type:</b> ${data.type}<br><b>Source IP:</b> ${data.ip}`)
+                        .addTo(markers);
+                }
+            });
+
+            if (markers.getLayers().length > 0) {
+                map.fitBounds(markers.getBounds(), { padding: [50, 50] });
+            }
+        }
+
+        // Function to predict traffic manually
+        async function predictTraffic() {
+            const form = document.getElementById('predictionForm');
+            const predictionResultDiv = document.getElementById('predictionResult');
+            predictionResultDiv.classList.add('hidden'); 
+
+            const formData = new FormData(form);
+            const data = {};
+            const numericalFields = [
+                'duration', 'src_bytes', 'dst_bytes', 'count', 'srv_count',
+                'serror_rate', 'srv_serror_rate', 'rerror_rate', 'srv_rerror_rate',
+                'same_srv_rate', 'diff_srv_rate', 'srv_diff_host_rate',
+                'dst_host_count', 'dst_host_srv_count', 'dst_host_same_srv_rate',
+                'dst_host_diff_srv_rate'
+            ];
+            formData.forEach((value, key) => {
+                if (numericalFields.includes(key)) {
+                    data[key] = parseFloat(value);
+                } else {
+                    data[key] = value; 
+                }
+            });
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/predict', { 
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    predictionResultDiv.textContent = `The network traffic is predicted as: ${result.prediction}`;
+                    predictionResultDiv.classList.remove('hidden');
+                    predictionResultDiv.classList.remove('prediction-result-normal', 'prediction-result-attack');
+                    if (result.prediction === 'Normal Traffic') {
+                        predictionResultDiv.classList.add('prediction-result-normal');
+                    } else {
+                        predictionResultDiv.classList.add('prediction-result-attack');
+                    }
+
+                    updatePredictionPieChart(result.prediction, result.normal_proba, result.attack_proba);
+                    loadConfusionMatrix(); 
+
+                } else {
+                    predictionResultDiv.textContent = `Error: ${result.error || 'Unknown error'}`;
+                    predictionResultDiv.classList.remove('hidden', 'prediction-result-normal', 'prediction-result-attack');
+                    predictionResultDiv.classList.add('prediction-result-attack'); 
+                    console.error('Prediction error:', result.error);
+                    updatePredictionPieChart('error'); 
+                }
+            } catch (error) {
+                predictionResultDiv.textContent = `Prediction failed: ${error.message}. Is Flask app running and ML model loaded?`;
+                predictionResultDiv.classList.remove('hidden', 'prediction-result-normal', 'prediction-result-attack');
+                predictionResultDiv.classList.add('prediction-result-attack');
+                console.error('Prediction fetch error: Failed to connect to Flask server. Please ensure app.py is running on http://127.0.0.1:5000. Full error:', error);
+                updatePredictionPieChart('error'); 
+            }
+        }
+
+        // Function to update the prediction pie chart (now with probabilities)
+        function updatePredictionPieChart(predictionResult, normalProba = null, attackProba = null) {
+            const ctx = document.getElementById('predictionPieChart').getContext('2d');
+            if (predictionPieChartInstance) {
+                predictionPieChartInstance.destroy();
+            }
+
+            let labels = [];
+            let data = [];
+            let backgroundColor = [];
+
+            if (normalProba !== null && attackProba !== null) {
+                const threshold = 0.005; 
+                let displayNormal = normalProba >= threshold;
+                let displayAttack = attackProba >= threshold;
+
+                if (!displayNormal && !displayAttack) { 
+                    labels = ['No Significant Prediction'];
+                    data = [1];
+                    backgroundColor = ['#9CA3AF'];
+                } else if (displayNormal && !displayAttack) { 
+                    labels = [`Normal Traffic (${(normalProba * 100).toFixed(2)}%)`];
+                    data = [normalProba];
+                    backgroundColor = ['#4CAF50'];
+                } else if (!displayNormal && displayAttack) { 
+                    labels = [`Attack Detected! (${(attackProba * 100).toFixed(2)}%)`];
+                    data = [attackProba];
+                    backgroundColor = ['#EF4444'];
+                } else { 
+                    labels = [
+                        `Normal Traffic (${(normalProba * 100).toFixed(2)}%)`, 
+                        `Attack Detected! (${(attackProba * 100).toFixed(2)}%)`
+                    ];
+                    data = [normalProba, attackProba];
+                    backgroundColor = ['#4CAF50', '#EF4444']; 
+                }
+            } else { 
+                labels = ['No Prediction Yet'];
+                data = [1];
+                backgroundColor = ['#9CA3AF']; 
+            }
+
+            predictionPieChartInstance = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels, 
+                    datasets: [{
+                        data: data,
+                        backgroundColor: backgroundColor,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false, 
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#333',
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        },
+                        title: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label; 
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+
+        // Function to load confusion matrix on tab activation
+        function loadConfusionMatrix() {
+            const confusionMatrixContainer = document.getElementById('confusionMatrixContainer');
+            let imgElement = document.getElementById('confusionMatrixImage'); 
+            const confusionMatrixMessage = document.getElementById('confusionMatrixMessage');
+            
+            confusionMatrixMessage.textContent = 'Loading confusion matrix...'; 
+
+            if (!imgElement) {
+                imgElement = document.createElement('img');
+                imgElement.id = 'confusionMatrixImage';
+                imgElement.alt = 'Confusion Matrix';
+                imgElement.className = 'max-w-full h-auto mx-auto'; 
+                confusionMatrixContainer.appendChild(imgElement);
+            }
+            imgElement.style.display = 'none'; 
+
+
+            fetch('http://127.0.0.1:5000/get_confusion_matrix_image') 
+                .then(response => response.json())
+                .then(result => {
+                    if (result.image) {
+                        imgElement.src = `data:image/png;base64,${result.image}`;
+                        imgElement.onload = () => { 
+                            imgElement.style.display = 'block';
+                            confusionMatrixMessage.textContent = ''; 
+                        };
+                        imgElement.onerror = () => { 
+                            confusionMatrixMessage.textContent = 'Failed to load confusion matrix image data.';
+                            imgElement.style.display = 'none';
+                        };
+                    } else {
+                        confusionMatrixMessage.textContent = result.message || 'Confusion matrix not available. Ensure Flask app is running and model artifacts are generated by `model.py`.';
+                        imgElement.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Confusion matrix fetch error: Failed to connect to Flask server. Please ensure app.py is running on http://127.0.0.1:5000. Full error:', error);
+                    confusionMatrixMessage.textContent = 'Error loading confusion matrix. Ensure Flask app is running and model artifacts are generated by `model.py`.';
+                    imgElement.style.display = 'none';
+                });
+        }
+
+
+        // Initial setup on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            updateMap([]); 
+            setInterval(() => {
+                fetchDashboardData(); 
+            }, 1000); 
+
+            showTab('dashboard', document.querySelector('.header-tab-item[onclick*="dashboard"]'));
+
+            updatePredictionPieChart('initial'); 
         });
+
     </script>
 </body>
 </html>
