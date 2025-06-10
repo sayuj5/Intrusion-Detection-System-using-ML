@@ -76,18 +76,26 @@ Characteristics: NSL-KDD is a widely recognized benchmark dataset for Intrusion 
 
 5 Machine Learning Model
 The heart of NetSentinel's detection capability is the Random Forest Classifier:
+
 5.1 Ensemble Learning: This algorithm builds a multitude of individual decision trees during training. Each tree is trained on a random subset of the data and features.
+
 5.2 Robust Classification: For incoming network traffic, each tree makes its own prediction. The final classification (e.g., 'Normal Traffic' or 'Attack Detected!') is determined by a majority vote among all the trees.
+
 5.3 Key Advantages: Random Forests are highly accurate, robust to overfitting, can handle high-dimensional data, and are effective with imbalanced datasets (crucial for IDS where attacks are rare) when configured with class_weight='balanced'.
 
 6 System Architecture
 NetSentinel operates through an integrated workflow:
 
 6.1 Offline Training: The Random Forest model is trained using the NSL-KDD dataset. The trained model and preprocessing artifacts (scaler, encoders) are saved.
+
 6.2 Live Capture: realtime_sniffer.py continuously captures raw packets from the network interface.
+
 6.3 Data Forwarding: Parsed packet data, along with basic rule-based attack indicators, is sent via HTTP POST requests to the Flask app.py server.
+
 6.4 Real-time Analysis: app.py loads the pre-trained ML model, processes incoming packets, classifies them (Normal/Attack), and aggregates real-time statistics.
+
 6.5 Dynamic Dashboard: Using WebSockets (Flask-SocketIO), app.py pushes live updates to the index.html web dashboard, providing instant visualizations.
+
 6.6 Historical Reporting: Upon session termination, app.py compiles and saves a detailed report (including raw packets and alerts) to reports.json.
 
 7 Installation & Setup
@@ -109,6 +117,7 @@ python -m venv venv
 7.4 Install Python Dependencies:
 
 7.4.1 Ensure your virtual environment is active.
+
 7.4.2 Install the required libraries using the requirements.txt file (which you should create based on the "Technologies Used" section above):
 pip install -r requirements.txt
 
@@ -117,8 +126,11 @@ pip freeze
 
 8 Usage
 8.1 Running the Application
+
 8.1.1 Train the Machine Learning Model:
+
 8.1.2 Open your terminal/command prompt and navigate to the project's root directory.
+
 8.1.3 Run the model training script. This will download the NSL-KDD dataset and save the trained model artifacts.
 python model.py
 
@@ -128,31 +140,47 @@ python app.py
 The server will typically start on http://127.0.0.1:5000/.
 
 8.3 Start the Real-time Packet Sniffer:
+
 8.3.1 Open another separate terminal/command prompt.
+
 8.3.2 Activate the virtual environment.
+
 8.3.3 Run the sniffing script:
+
 python realtime_sniffer.py
+
 8.3.4 The sniffer will automatically attempt to detect and sniff on an available network interface. Press Ctrl+C in this terminal to stop the sniffer and finalize the session report.
 
 8.4 Dashboard Interaction
+
 8.4.1 Open your web browser and navigate to http://127.0.0.1:5000/.
+
 8.4.2 Dashboard Tab: View real-time statistics, intrusion rates, attack type distributions, and top attacker IPs.
+
 8.4.3 Events Tab: See a live stream of detected intrusion events with details.
+
 8.4.4 Live Traffic Tab: Observe raw network packets being captured in real-time.
+
 8.4.5 Reports Tab: Browse and view detailed summaries and full packet logs from past sniffing sessions.
+
 8.4.6 Manual Test Tab: Experiment with direct model predictions (see "Manual Intrusion Detection" below).
 
 8.5 Manual Intrusion Detection
 The "Manual Test" tab allows you to feed specific network feature values into the ML model to see its prediction.
 8.5.1 Go to the "Manual Test" tab in the dashboard.
+
 8.5.2 Input values for the 19 network traffic features (e.g., duration, protocol_type, service, flag, src_bytes, dst_bytes, count, serror_rate, etc.).
+
 8.5.3 Click the "Predict" button.
+
 8.5.4 Observe the model's prediction ("Normal Traffic" or "Attack Detected!") and the prediction probability pie chart.
 
 8.6 Packet Testing (Live Traffic)
 To simulate and test real-time detection:
 8.6.1 Ensure both app.py and realtime_sniffer.py are running.
+
 8.6.2 Use external tools (e.g., Nmap for port scans, Hydra for SSH brute-force) from another machine (e.g., a Kali Linux VM on the same network) to generate malicious traffic targeting the NetSentinel host.
+
 8.6.3 Observe alerts and statistics updating in real-time on your dashboard.
 
 9 Project Team
@@ -166,11 +194,17 @@ Ujjwal Kumar Mishra: Documentation & Reporting
 
 10 Future Scope
 Advanced Threat Intelligence: Integration with external threat feeds and dynamic blacklist/whitelist features.
+
 Deep Learning Models: Exploration of more complex neural network architectures for enhanced detection capabilities.
+
 Automated Response: Implementation of active response mechanisms (e.g., blocking IPs, isolating hosts).
+
 Scalability & Deployment: Transition to robust database solutions (e.g., MongoDB, PostgreSQL) and containerization with Docker.
+
 User Management: Secure user authentication and role-based access control.
+
 Enhanced UI/UX: Further dashboard refinements, custom alert thresholds, and advanced filtering.
+
 Protocol-Aware Analysis: Deeper analysis of application-layer protocols for nuanced threat detection.
 
 License
