@@ -21,7 +21,7 @@ Table of Contents
 12. References
 
 
-1. About the Project
+1 About the Project
 NetSentinel stands as a cutting-edge Machine Learning-Based Intrusion Detection System (IDS) meticulously engineered to safeguard modern networks against evolving cyber threats. This sophisticated platform seamlessly integrates a high-performance scapy-driven real-time packet sniffer with a dynamic Flask web application, powered by a finely-tuned Random Forest model. This model is comprehensively trained on the NSL-KDD dataset, a widely recognized benchmark for IDS evaluation containing diverse network connection records labeled as normal or various attack types, enabling intelligent anomaly detection.
 
 Beyond conventional monitoring, NetSentinel actively analyzes live network traffic, leveraging its advanced machine learning capabilities to swiftly discern between benign and malicious activities. It proactively identifies diverse attack vectors, from subtle anomalies to overt brute-force attempts like SSH attacks, presenting critical insights through an intuitive, real-time dashboard. Furthermore, the system rigorously logs every session, generating comprehensive historical reports vital for forensic analysis and robust security posture enhancement. NetSentinel redefines network defense by providing unparalleled visibility, automated threat intelligence, and a vigilant, adaptive shield against the digital landscape's persistent challenges.
@@ -166,3 +166,5 @@ User Management: Secure user authentication and role-based access control.
 Enhanced UI/UX: Further dashboard refinements, custom alert thresholds, and advanced filtering.
 Protocol-Aware Analysis: Deeper analysis of application-layer protocols for nuanced threat detection.
 
+License
+This project is licensed under the MIT License(LICENSE.md) - see the LICENSE.md file for details.
