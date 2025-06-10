@@ -27,12 +27,19 @@ NetSentinel stands as a cutting-edge Machine Learning-Based Intrusion Detection 
 Beyond conventional monitoring, NetSentinel actively analyzes live network traffic, leveraging its advanced machine learning capabilities to swiftly discern between benign and malicious activities. It proactively identifies diverse attack vectors, from subtle anomalies to overt brute-force attempts like SSH attacks, presenting critical insights through an intuitive, real-time dashboard. Furthermore, the system rigorously logs every session, generating comprehensive historical reports vital for forensic analysis and robust security posture enhancement. NetSentinel redefines network defense by providing unparalleled visibility, automated threat intelligence, and a vigilant, adaptive shield against the digital landscape's persistent challenges.
 
 2 Features
+
 2.1 Real-time Packet Sniffing: Captures live network traffic for continuous monitoring.
+
 2.2 Machine Learning-Based Detection: Utilizes a Random Forest classifier to detect anomalies and potential intrusions.
+
 2.3 Rule-Based Attack Identification: Identifies specific attack types (e.g., SSH attempts) using predefined rules.
+
 2.4 Interactive Web Dashboard: Provides a user-friendly interface for visualizing real-time network statistics, intrusion alerts, and attack distributions.
+
 2.5 Live Event Logging: Displays a chronological log of all detected intrusion events.
+
 2.6 Historical Reporting: Generates and stores detailed reports for each sniffing session, enabling retrospective analysis.
+
 2.7 Manual Detection Panel: Allows users to input network features manually to test the ML model's prediction capabilities on demand.
 
 3 Technologies Used
