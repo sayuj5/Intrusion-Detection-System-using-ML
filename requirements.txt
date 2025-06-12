@@ -1,9 +1,15 @@
 This file lists the Python libraries project depends on.
 
-# Python Libraries
-scapy
-Flask
-Flask-SocketIO
 scikit-learn
 pandas
 numpy
+Flask
+Flask-SocketIO
+gevent
+greenlet  # This is a dependency of gevent
+scapy
+requests
+matplotlib
+seaborn
+joblib
+geoip2
