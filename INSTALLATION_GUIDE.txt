@@ -1,0 +1,64 @@
+NetSentinel: A Machine Learning-Based Intrusion Detection System
+Installation and Setup Guide
+
+This guide will walk you through the process of setting up and running the NetSentinel project.
+
+1.  Prerequisites
+
+    Before you begin, ensure you have the following installed on your system:
+
+    * Python 3.x (Python 3.8+ recommended)
+        Download from: https://www.python.org/downloads/
+    * pip (Python's package installer, usually comes with Python)
+
+    For Windows Users (Mandatory for Network Packet Capture):
+    * Npcap: This is essential for Scapy to capture packets on Windows.
+        Download the latest stable release from: https://nmap.org/npcap/
+        During installation, ensure "Support raw 802.11 traffic (and monitor mode) for wireless adapters" and "Install Npcap in WinPcap API-compatible Mode" are checked.
+
+2.  Project Setup
+
+    a.  Clone the Repository (or download the ZIP file):
+        If you are using Git, open your terminal/command prompt and run:
+        git clone <your_github_repo_url_here>
+        cd <your_project_folder_name>
+
+    b.  Create a Virtual Environment (Recommended):
+        It's highly recommended to use a virtual environment to manage project dependencies isolation.
+        python -m venv venv
+        
+        Activate the virtual environment:
+        * On Windows:
+            venv\Scripts\activate
+        * On macOS/Linux:
+            source venv/bin/activate
+
+    c.  Install Python Dependencies:
+        With your virtual environment activated, install all required Python libraries using the `requirements.txt` file:
+        pip install -r requirements.txt
+
+    d.  Install Npcap (Windows Only):
+        If you are on Windows, ensure Npcap is installed as described in the "Prerequisites" section (Step 1). Without it, the network sniffing functionality will not work.
+
+3.  Running the Project
+
+    After successfully installing all dependencies, you can run the NetSentinel application.
+
+    a.  Navigate to the Project Directory:
+        Ensure your terminal/command prompt is in the main project directory where `app.py` or your main Flask application file is located.
+
+    b.  Start the Flask Application:
+        python app.py
+
+    c.  Access the Dashboard:
+        Once the Flask server starts, it will typically provide a URL (e.g., http://127.0.0.1:5000/). Open this URL in your web browser to access the NetSentinel dashboard.
+
+4.  Additional Notes
+
+    * Machine Learning Model: The project uses a Random Forest Classifier. Ensure your trained model file (e.g., `random_forest_model.pkl` or similar, as used in your code) is present in the expected directory within the project structure. If the model needs to be trained, relevant scripts should be run first (e.g., `python train_model.py` if such a script exists).
+
+    * Frontend Libraries: Chart.js and Leaflet.js are used for the dashboard's visualization. These are typically included directly via CDN links or local static files within the HTML templates, so no separate `npm install` is usually required for running the Python application. Ensure these static assets are correctly served by the Flask application.
+
+    * Configuration: Check for any configuration files (e.g., `config.py` or `.env` files) that might need specific settings for database connections (if any) or API keys.
+
+---

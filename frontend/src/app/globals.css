@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+:root {
+  --background: #030305;
+  --surface: rgba(14, 14, 18, 0.6);
+  --surface-low: rgba(20, 20, 25, 0.4);
+  --primary: #00f0ff;
+  --secondary: #39ff14;
+  --tertiary: #ff2a2a;
+}
+
+body {
+  background: radial-gradient(circle at 50% 0%, #111a22 0%, var(--background) 70%);
+  color: #e2e8f0;
+  min-height: 100vh;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background-image: 
+      linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+  background-size: 30px 30px;
+  z-index: -1;
+  pointer-events: none;
+}

@@ -1,0 +1,36 @@
+venv/
+venv_new/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+.env
+
+# Dependencies
+node_modules/
+.next/
+out/
+build/
+
+# Large files & Logs
+firewall_logs.txt
+reports.json
+GeoLite2-City.mmdb
+GeoLite2-City_20250603/
+*.log
+*.zip
+*.tar.gz
+*.rar
+
+# Model artifacts (if they are too big for GitHub > 100MB, otherwise fine)
+# ids_model.pkl  (it is 7MB, so it is fine to keep)
+
+# OS generated
+.DS_Store
+Thumbs.db
+
+# IDE files
+.idea/
+.vscode/

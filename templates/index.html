@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NetSentinel - Cybernetic Command Center</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Leaflet CSS for Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <!-- Chart.js for charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Leaflet JS for Map -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        :root {
+            --background: #030305;
+            --surface: rgba(14, 14, 18, 0.6);
+            --surface-low: rgba(20, 20, 25, 0.4);
+            --primary: #00f0ff;
+            --primary-container: rgba(0, 240, 255, 0.1);
+            --secondary: #39ff14;
+            --tertiary: #ff2a2a;
+            --text-on-primary: #001217;
+            --outline: rgba(0, 240, 255, 0.2);
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-body: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: radial-gradient(circle at 50% 0%, #111a22 0%, var(--background) 70%);
+            color: #e2e8f0;
+            margin: 0;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Animated Grid Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: var(--font-display);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .cyber-header {
+            background: linear-gradient(180deg, rgba(3,10,15,0.9) 0%, transparent 100%);
+            border-bottom: 1px solid var(--outline);
+            padding: 2rem;
+            text-align: left;
+            position: relative;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 10;
+        }
+
+        .cyber-header::after {
+            content: "";
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            box-shadow: 0 0 10px var(--primary);
+        }
+
+        .nav-tabs {
+            background-color: transparent;
+            padding: 0 1rem;
+            gap: 1rem;
+        }
+
+        .nav-link {
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            color: #8b949e;
+            font-family: var(--font-display);
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            border-bottom: 2px solid transparent;
+            position: relative;
+        }
+
+        .nav-link:hover {
+            color: #ffffff;
+            text-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+        }
+
+        .nav-link.active {
+            color: var(--primary);
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+        }
+        
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px; left: 0; width: 100%; height: 2px;
+            background: var(--primary);
+            box-shadow: 0 -2px 10px var(--primary);
+        }
+
+        .tab-content {
+            padding: 2rem;
+            min-height: calc(100vh - 200px);
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background-color: var(--surface-low);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--outline);
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+
+        .card:hover { 
+            border-color: rgba(0,240,255,0.5); 
+            box-shadow: 0 8px 30px rgba(0,240,255,0.1);
+            transform: translateY(-2px);
+        }
+
+        .card-green { border-top: 3px solid var(--secondary); }
+        .card-red { border-top: 3px solid var(--tertiary); }
+        
+        .stat-value {
+            font-family: var(--font-mono);
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-top: 0.5rem;
+            text-shadow: 0 0 20px currentColor;
+        }
+
+        #map {
+            height: 500px;
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--outline);
+            filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(110%);
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+            box-shadow: 0 0 8px currentColor;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(currentColor, 0.7); }
+            70% { box-shadow: 0 0 0 6px rgba(currentColor, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(currentColor, 0); }
+        }
+
+        .status-green { color: var(--secondary); background-color: var(--secondary); }
+        .status-red { color: var(--tertiary); background-color: var(--tertiary); }
+        .status-yellow { color: #ffc107; background-color: #ffc107; }
+
+        .cyber-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+        }
+
+        .cyber-table th {
+            text-align: left;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.6);
+            color: var(--primary);
+            text-transform: uppercase;
+            font-weight: 600;
+            border-bottom: 2px solid rgba(0, 240, 255, 0.3);
+            backdrop-filter: blur(8px);
+        }
+
+        .cyber-table td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            background: rgba(20, 20, 25, 0.3);
+        }
+
+        .cyber-table tr:hover td {
+            background-color: rgba(0, 240, 255, 0.08);
+        }
+
+        .cyber-button {
+            background: linear-gradient(135deg, rgba(0,240,255,0.2) 0%, transparent 100%);
+            color: var(--primary);
+            padding: 0.75rem 1.5rem;
+            font-family: var(--font-display);
+            font-weight: 700;
+            text-transform: uppercase;
+            border: 1px solid var(--primary);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cyber-button::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0,240,255,0.4), transparent);
+            transition: all 0.4s ease;
+        }
+
+        .cyber-button:hover {
+            background: var(--primary);
+            color: var(--text-on-primary);
+            box-shadow: 0 0 20px rgba(0,240,255,0.4);
+        }
+
+        .cyber-button:hover::before {
+            left: 100%;
+        }
+
+        .cyber-input {
+            background-color: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--outline);
+            border-radius: 6px;
+            color: white;
+            padding: 0.75rem 1rem;
+            font-family: var(--font-mono);
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .cyber-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.2);
+            background-color: rgba(0, 240, 255, 0.05);
+        }
+
+        /* Scanline animation */
+        .scanline {
+            width: 100%;
+            height: 100px;
+            z-index: 9999;
+            background: linear-gradient(0deg, rgba(0, 0, 0, 0) 0%, rgba(0, 212, 255, 0.03) 50%, rgba(0, 0, 0, 0) 100%);
+            opacity: 0.1;
+            position: fixed;
+            bottom: 100%;
+            animation: scanline 6s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes scanline {
+            0% { bottom: 100%; }
+            100% { bottom: -100px; }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--surface-low); }
+        ::-webkit-scrollbar-thumb { background: var(--outline); border: 2px solid var(--surface-low); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+    </style>
+</head>
+    <div class="scanline"></div>
+    <header class="cyber-header flex items-center justify-between">
+        <div>
+            <h1 class="text-4xl font-black text-white drop-shadow-[0_0_15px_rgba(0,240,255,0.4)]"><span class="text-[var(--primary)]">NET</span>SENTINEL</h1>
+            <p class="text-xs text-gray-400 mt-2 font-mono uppercase tracking-[0.3em]">ML-Driven Network Defense Engine // Ver 2.4.1</p>
+        </div>
+        <div class="flex space-x-8 px-6 bg-[rgba(0,0,0,0.4)] rounded-full py-2 border border-[var(--outline)]">
+            <div class="flex items-center text-[11px] font-mono tracking-tighter shadow-sm">
+                <span id="predictionApiStatus" class="status-indicator status-yellow"></span> APP.PY
+            </div>
+            <div class="flex items-center text-[11px] font-mono tracking-tighter shadow-sm">
+                <span id="snifferStatus" class="status-indicator status-yellow"></span> ML.API
+            </div>
+            <div class="flex items-center text-[11px] font-mono tracking-tighter shadow-sm">
+                <span id="firewallStatus" class="status-indicator status-yellow"></span> FIREWALL
+            </div>
+        </div>
+    </header>
+
+    <div class="px-6 py-2 flex justify-between items-center bg-[rgba(10,10,12,0.6)] backdrop-blur-md border-b border-[var(--outline)] shadow-lg z-20 relative">
+        <nav class="nav-tabs flex space-x-2">
+            <a class="nav-link active rounded-t-lg" data-tab="dashboard">Dashboard</a>
+            <a class="nav-link rounded-t-lg" data-tab="events">Log Stream</a>
+            <a class="nav-link rounded-t-lg" data-tab="liveTraffic">Live Traffic</a>
+            <a class="nav-link rounded-t-lg" data-tab="reports">History</a>
+            <a class="nav-link rounded-t-lg" data-tab="manualTest">Machine Vision</a>
+            <a class="nav-link rounded-t-lg" data-tab="ipManagement">Access Control</a>
+        </nav>
+    </div>
+
+    <main class="container mx-auto mt-4 px-4">
+        <!-- Dashboard Tab Content -->
+        <div id="dashboardContent" class="tab-content">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="card card-green">
+                    <h2 class="text-xs font-bold text-gray-500 uppercase">Packets Analyzed</h2>
+                    <div id="totalPackets" class="stat-value text-[var(--secondary)]">0</div>
+                </div>
+                <div class="card card-red">
+                    <h2 class="text-xs font-bold text-gray-500 uppercase">Intrusions Detected</h2>
+                    <div id="totalIntrusions" class="stat-value text-[var(--tertiary)]">0</div>
+                </div>
+                <div class="card">
+                    <h2 class="text-xs font-bold text-gray-500 uppercase">Intrusion Rate</h2>
+                    <div id="intrusionRate" class="stat-value text-[var(--primary)]">0.00%</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="card">
+                    <h2 class="text-lg font-semibold text-gray-300 mb-4">Attack Type Distribution</h2>
+                    <canvas id="attackTypeChart"></canvas>
+                </div>
+                <div class="card">
+                    <h2 class="text-lg font-semibold text-gray-300 mb-4">Intrusions Over Time</h2>
+                    <canvas id="intrusionsOverTimeChart"></canvas>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="card">
+                    <h2 class="text-lg font-semibold text-gray-300 mb-4">Top Attacker IPs</h2>
+                    <canvas id="topAttackerIpChart"></canvas>
+                </div>
+                <div class="card">
+                    <h2 class="text-lg font-semibold text-gray-300 mb-4">Failed SSH Logins (Simulated)</h2>
+                    <canvas id="failedSshLoginsChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 class="text-lg font-semibold text-gray-300 mb-4">Live Intrusion Map</h2>
+                <div id="map" class="rounded-lg shadow-inner"></div>
+            </div>
+        </div>
+
+        <!-- Events Tab Content -->
+        <div id="eventsContent" class="tab-content hidden">
+            <h2 class="text-2xl font-bold mb-4 text-[var(--primary)]">Security Event Log</h2>
+            <p class="text-gray-500 mb-6 font-mono text-xs uppercase tracking-widest">[ LIVE STREAM DETECTED INTRUSIONS ]</p>
+            <div class="border border-[var(--outline)]">
+                <table class="cyber-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Prediction</th>
+                            <th>Attack Type</th>
+                            <th>Source IP</th>
+                            <th>Destination IP</th>
+                            <th>Source Location</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="eventsTableBody">
+                        <!-- Events will be dynamically inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Live Traffic Tab Content -->
+        <div id="liveTrafficContent" class="tab-content hidden">
+            <h2 class="text-2xl font-bold mb-4 text-[var(--primary)]">Live Network Traffic Feed</h2>
+            <div class="border border-[var(--outline)]">
+                <table class="cyber-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Source IP</th>
+                            <th>Destination IP</th>
+                            <th>Protocol</th>
+                            <th>S-Port</th>
+                            <th>D-Port</th>
+                            <th>Len</th>
+                        </tr>
+                    </thead>
+                    <tbody id="liveTrafficTableBody">
+                        <!-- Live traffic will be dynamically inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Reports Tab Content -->
+        <div id="reportsContent" class="tab-content hidden">
+            <h2 class="text-2xl font-bold mb-4 text-[var(--primary)]">Historical Session Reports</h2>
+            <div class="border border-[var(--outline)]">
+                <table class="cyber-table">
+                    <thead>
+                        <tr>
+                            <th>Session ID</th>
+                            <th>Start Time</th>
+                            <th>End Time</th>
+                            <th>Packets</th>
+                            <th>Intrusions</th>
+                            <th>Top Attacks</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportsTableBody">
+                        <!-- Reports will be dynamically inserted here -->
+                    </tbody>
+                </table>
+            </div>
+            <!-- Modal for Report Details -->
+            <div id="reportDetailsModal" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center hidden z-50">
+                <div class="bg-[var(--surface)] border-2 border-[var(--primary)] p-8 w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto relative">
+                    <button class="absolute top-4 right-4 text-[var(--primary)] hover:text-white text-3xl font-mono" onclick="closeReportDetailsModal()">[X]</button>
+                    <h3 class="text-2xl font-bold text-[var(--primary)] mb-6">Archive: <span id="modalSessionId" class="text-white"></span></h3>
+                    <div class="grid grid-cols-3 gap-4 mb-8">
+                        <div class="p-4 border border-[var(--outline)]">
+                            <span class="text-xs text-gray-500 block uppercase">Total Throughput</span>
+                            <span id="modalTotalPackets" class="text-xl font-mono text-[var(--secondary)]"></span>
+                        </div>
+                        <div class="p-4 border border-[var(--outline)]">
+                            <span class="text-xs text-gray-500 block uppercase">Threat Count</span>
+                            <span id="modalTotalIntrusions" class="text-xl font-mono text-[var(--tertiary)]"></span>
+                        </div>
+                        <div class="p-4 border border-[var(--outline)]">
+                            <span class="text-xs text-gray-500 block uppercase">Vectors</span>
+                            <span id="modalTopAttacks" class="text-[10px] font-mono"></span>
+                        </div>
+                    </div>
+                    <h4 class="text-lg font-bold text-[var(--primary)] mb-4">Detected Threats</h4>
+                    <table class="cyber-table mb-8">
+                        <thead>
+                            <tr><th>Time</th><th>Result</th><th>Vector</th><th>Src</th><th>Dst</th></tr>
+                        </thead>
+                        <tbody id="modalEventsTableBody"></tbody>
+                    </table>
+                    <h4 class="text-lg font-bold text-[var(--primary)] mb-4">Binary Context (Tail)</h4>
+                    <table class="cyber-table">
+                        <thead>
+                            <tr><th>Time</th><th>Src</th><th>Dst</th><th>Prot</th><th>Len</th></tr>
+                        </thead>
+                        <tbody id="modalTrafficTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manual Test Tab Content -->
+        <div id="manualTestContent" class="tab-content hidden">
+            <h2 class="text-2xl font-bold mb-4 text-[var(--primary)]">Machine Vision Analysis</h2>
+            <p class="text-gray-500 mb-6 font-mono text-xs uppercase tracking-widest">[ MANUAL PACKET INJECTION & PREDICTION ]</p>
+
+            <div class="card mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- Input fields for NSL-KDD features -->
+                    <div class="flex flex-col">
+                        <label class="text-[10px] text-gray-500 uppercase font-bold mb-1">Duration</label>
+                        <input type="number" id="duration" value="0" class="cyber-input">
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[10px] text-gray-500 uppercase font-bold mb-1">Protocol</label>
+                        <select id="protocol-type" class="cyber-input bg-black">
+                            <option value="tcp">TCP</option>
+                            <option value="udp">UDP</option>
+                            <option value="icmp">ICMP</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[10px] text-gray-500 uppercase font-bold mb-1">Service</label>
+                        <input type="text" id="service" value="http" class="cyber-input">
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[10px] text-gray-500 uppercase font-bold mb-1">Flag</label>
+                        <input type="text" id="flag" value="SF" class="cyber-input">
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[10px] text-gray-500 uppercase font-bold mb-1">Src Bytes</label>
+                        <input type="number" id="src-bytes" value="181" class="cyber-input">
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[10px] text-gray-500 uppercase font-bold mb-1">Dst Bytes</label>
+                        <input type="number" id="dst-bytes" value="5450" class="cyber-input">
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[10px] text-gray-500 uppercase font-bold mb-1">Count</label>
+                        <input type="number" id="count" value="8" class="cyber-input">
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[10px] text-gray-500 uppercase font-bold mb-1">Srv Count</label>
+                        <input type="number" id="srv-count" value="8" class="cyber-input">
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[10px] text-gray-500 uppercase font-bold mb-1">Serror Rate</label>
+                        <input type="number" step="0.01" id="serror-rate" value="0.0" class="cyber-input">
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[10px] text-gray-500 uppercase font-bold mb-1">Srv Serror Rate</label>
+                        <input type="number" step="0.01" id="srv-serror-rate" value="0.0" class="cyber-input">
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[10px] text-gray-500 uppercase font-bold mb-1">Rerror Rate</label>
+                        <input type="number" step="0.01" id="rerror-rate" value="0.0" class="cyber-input">
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[10px] text-gray-500 uppercase font-bold mb-1">Srv Rerror Rate</label>
+                        <input type="number" step="0.01" id="srv-rerror-rate" value="0.0" class="cyber-input">
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[10px] text-gray-500 uppercase font-bold mb-1">Same Srv Rate</label>
+                        <input type="number" step="0.01" id="same-srv-rate" value="1.0" class="cyber-input">
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[10px] text-gray-500 uppercase font-bold mb-1">Diff Srv Rate</label>
+                        <input type="number" step="0.01" id="diff-srv-rate" value="0.0" class="cyber-input">
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[10px] text-gray-500 uppercase font-bold mb-1">Srv Diff Host Rate</label>
+                        <input type="number" step="0.01" id="srv-diff-host-rate" value="0.0" class="cyber-input">
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[10px] text-gray-500 uppercase font-bold mb-1">Dst Host Count</label>
+                        <input type="number" id="dst-host-count" value="9" class="cyber-input">
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[10px] text-gray-500 uppercase font-bold mb-1">Dst Host Srv Count</label>
+                        <input type="number" id="dst-host-srv-count" value="9" class="cyber-input">
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[10px] text-gray-500 uppercase font-bold mb-1">Dst Host Same Srv Rate</label>
+                        <input type="number" step="0.01" id="dst-host-same-srv-rate" value="1.0" class="cyber-input">
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[10px] text-gray-500 uppercase font-bold mb-1">Dst Host Diff Srv Rate</label>
+                        <input type="number" step="0.01" id="dst-host-diff-srv-rate" value="0.0" class="cyber-input">
+                    </div>
+                </div>
+                <div class="mt-8 flex items-center justify-between">
+                    <button id="predictManualBtn" class="cyber-button">Execute Prediction</button>
+                    <div id="manualTestResult" class="font-mono text-sm"></div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="card">
+                    <h3 class="text-sm font-bold text-gray-500 mb-4 uppercase">Prediction Confidence</h3>
+                    <div class="h-64">
+                        <canvas id="predictionOverviewChart"></canvas>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3 class="text-sm font-bold text-gray-500 mb-4 uppercase">Confusion Matrix</h3>
+                    <div class="relative bg-black flex items-center justify-center min-h-[16rem]">
+                        <img id="confusionMatrixImg" src="" alt="Confusion Matrix" class="max-w-full h-auto opacity-80" style="display: none;">
+                        <div id="confusionMatrixPlaceholder" class="text-[10px] font-mono text-[var(--primary)] animate-pulse">Initializing Matrix...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- IP Management Tab Content -->
+        <div id="ipManagementContent" class="tab-content hidden">
+            <h2 class="text-2xl font-bold mb-4 text-[var(--primary)]">Firewall Access Control</h2>
+            <p class="text-gray-500 mb-6 font-mono text-xs uppercase tracking-widest">[ SYSTEM BLOCKLIST & WHITELIST MANAGEMENT ]</p>
+            <div class="card mb-8">
+                <div class="flex flex-wrap items-end gap-6">
+                    <div class="flex-grow">
+                        <label class="text-[10px] text-gray-500 uppercase font-bold mb-1">Target Address</label>
+                        <input type="text" id="ipInput" placeholder="0.0.0.0" class="cyber-input">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-500 uppercase font-bold mb-1">List Protocol</label>
+                        <select id="listType" class="cyber-input bg-black">
+                            <option value="blacklist">Blocklist</option>
+                            <option value="whitelist">Whitelist</option>
+                        </select>
+                    </div>
+                    <button onclick="addIpToList()" class="cyber-button">Authorize</button>
+                    <button onclick="removeIpFromList()" class="bg-transparent border border-[var(--tertiary)] text-[var(--tertiary)] hover:bg-[var(--tertiary)] hover:text-white px-6 py-3 font-bold transition-all text-xs uppercase">Purge</button>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="card border-l-[var(--tertiary)]">
+                    <h3 class="text-sm font-bold text-[var(--tertiary)] mb-4 uppercase">Restricted Nodes</h3>
+                    <ul id="blacklistDisplay" class="font-mono text-xs space-y-2 h-64 overflow-y-auto">
+                        <li class="text-gray-600">NULL_SET</li>
+                    </ul>
+                </div>
+                <div class="card border-l-[var(--secondary)]">
+                    <h3 class="text-sm font-bold text-[var(--secondary)] mb-4 uppercase">Verified Nodes</h3>
+                    <ul id="whitelistDisplay" class="font-mono text-xs space-y-2 h-64 overflow-y-auto">
+                        <li class="text-gray-600">NULL_SET</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
+    <script>
+        const BASE_API_URL = "http://127.0.0.1:5055"; // Updated Port
+        const PREDICTION_API_URL = "http://127.0.0.1:5001"; // Your new prediction_api.py URL
+
+        const socket = io(BASE_API_URL);
+
+        // --- Chart Instances ---
+        let attackTypeChart, intrusionsOverTimeChart, topAttackerIpChart, failedSshLoginsChart, predictionOverviewChart;
+
+        // --- Map Initialization ---
+        let map;
+        let ipMarkers = {}; // Store Leaflet markers by IP
+
+        function initializeMap() {
+            if (map) map.remove(); // Remove existing map if re-initializing
+            map = L.map('map').setView([20, 0], 2); // Centered globally, zoom level 2
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+        }
+
+        // --- Tab Switching Logic ---
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function() {
+                document.querySelectorAll('.nav-link').forEach(nav => nav.classList.remove('active'));
+                this.classList.add('active');
+
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+                const targetTab = this.getAttribute('data-tab');
+                document.getElementById(targetTab + 'Content').classList.remove('hidden');
+
+                // Special actions for specific tabs
+                if (targetTab === 'reports') {
+                    fetchHistoricalReports();
+                } else if (targetTab === 'manualTest') {
+                    loadConfusionMatrix();
+                } else if (targetTab === 'ipManagement') { // New: Fetch IP lists when tab is active
+                    fetchIpLists();
+                }
+            });
+        });
+
+        // --- Socket.IO Event Handlers ---
+        socket.on('connect', () => {
+            console.log('Connected to Flask Socket.IO');
+            // Initial fetch of data on connect, or when app.py emits 'update_stats'
+        });
+
+        socket.on('dashboard_update', (data) => {
+            document.getElementById('totalPackets').textContent = data.total_packets;
+            document.getElementById('totalIntrusions').textContent = data.intrusion_count;
+            document.getElementById('intrusionRate').textContent = `${data.intrusion_rate.toFixed(2)}%`;
+
+            // Update Attack Type Distribution Chart
+            if (attackTypeChart) attackTypeChart.destroy();
+            attackTypeChart = new Chart(document.getElementById('attackTypeChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(data.attack_types),
+                    datasets: [{
+                        data: Object.values(data.attack_types),
+                        backgroundColor: ['#00d4ff', '#39ff14', '#ff3131', '#9966FF', '#FF9900', '#FF6384'],
+                        borderColor: '#000000',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { color: '#ffffff', font: { family: 'JetBrains Mono', size: 10 } } },
+                    }
+                }
+            });
+
+            // Update Intrusions Over Time Chart
+            if (intrusionsOverTimeChart) intrusionsOverTimeChart.destroy();
+            intrusionsOverTimeChart = new Chart(document.getElementById('intrusionsOverTimeChart'), {
+                type: 'line',
+                data: {
+                    labels: ['T-60', 'T-45', 'T-30', 'T-15', 'NOW'],
+                    datasets: [{
+                        label: 'Threat Intensity',
+                        data: [0, 0, 0, 0, data.intrusion_count],
+                        borderColor: '#00d4ff',
+                        backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#555' } },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#555' } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Update Live Intrusion Map
+            updateLiveMap(data.live_ips_for_map);
+        });
+
+        socket.on('new_event', (event) => {
+            const eventsTableBody = document.getElementById('eventsTableBody');
+            const row = eventsTableBody.insertRow(0);
+            row.className = event.event_type === 'Intrusion' ? 'bg-[var(--tertiary)] bg-opacity-10 text-[var(--tertiary)]' : 'text-gray-400';
+
+            row.insertCell(0).innerHTML = `<span class="text-[9px]">${event.timestamp}</span>`;
+            row.insertCell(1).innerHTML = `<span class="px-2 py-0.5 border border-current text-[8px] font-bold uppercase">${event.result}</span>`;
+            row.insertCell(2).textContent = event.attack_type;
+            row.insertCell(3).textContent = event.src_ip;
+            row.insertCell(4).textContent = event.dst_ip;
+            row.insertCell(5).textContent = event.src_country || 'UNKNOWN';
+            row.insertCell(6).innerHTML = `<button class="text-[var(--primary)] hover:underline" onclick="console.log(${JSON.stringify(event.details)})">EXPAND</button>`;
+        });
+
+        socket.on('live_traffic_update', (data) => {
+            const liveTrafficTableBody = document.getElementById('liveTrafficTableBody');
+            // This event might be emitted less frequently or with aggregated data
+            // For simplicity, let's assume it sends individual packet data or a small batch
+            // You might need to adjust this based on what realtime_sniffer.py sends
+            if (data.packets && Array.isArray(data.packets)) {
+                data.packets.forEach(packet => {
+                    const row = liveTrafficTableBody.insertRow(0);
+                    row.className = 'bg-gray-800 hover:bg-gray-700';
+                    row.insertCell(0).textContent = packet.timestamp;
+                    row.insertCell(1).textContent = packet.src_ip;
+                    row.insertCell(2).textContent = packet.dst_ip;
+                    row.insertCell(3).textContent = packet.protocol_type;
+                    row.insertCell(4).textContent = packet.src_port || 'N/A';
+                    row.insertCell(5).textContent = packet.dst_port || 'N/A';
+                    row.insertCell(6).textContent = packet.packet_length || 'N/A';
+                });
+                // Keep table size manageable
+                while (liveTrafficTableBody.rows.length > 200) {
+                    liveTrafficTableBody.deleteRow(-1);
+                }
+            }
+        });
+
+        // --- Live Map Update Function ---
+        function updateLiveMap(ipsData) {
+            // Remove markers for IPs no longer active
+            for (const ip in ipMarkers) {
+                if (!(ip in ipsData)) {
+                    map.removeLayer(ipMarkers[ip]);
+                    delete ipMarkers[ip];
+                }
+            }
+
+            for (const ip in ipsData) {
+                const ipInfo = ipsData[ip];
+                if (ipInfo.latitude && ipInfo.longitude) {
+                    const lat = ipInfo.latitude;
+                    const lon = ipInfo.longitude;
+                    const isIntrusion = ipInfo.is_intrusion;
+
+                    let markerColor = isIntrusion ? 'red' : 'green';
+                    let markerHtml = `<div style="background-color:${markerColor}; width:1rem; height:1rem; border-radius:50%; border:2px solid white;"></div>`;
+                    let customIcon = L.divIcon({
+                        className: 'custom-div-icon',
+                        html: markerHtml,
+                        iconSize: [16, 16],
+                        iconAnchor: [8, 8]
+                    });
+
+                    let popupContent = `<b>IP:</b> ${ip}<br><b>Status:</b> ${isIntrusion ? 'Intrusion Detected' : 'Normal Traffic'}<br><b>Location:</b> ${ipInfo.city || 'N/A'}, ${ipInfo.country || 'N/A'}`;
+
+                    if (ipMarkers[ip]) {
+                        // Update existing marker's icon and popup if status changes
+                        ipMarkers[ip].setIcon(customIcon);
+                        ipMarkers[ip].setPopupContent(popupContent);
+                    } else {
+                        // Add new marker
+                        const marker = L.marker([lat, lon], { icon: customIcon }).addTo(map);
+                        marker.bindPopup(popupContent);
+                        ipMarkers[ip] = marker;
+                    }
+                }
+            }
+        }
+
+
+        // --- Historical Reports Fetch Function ---
+        async function fetchHistoricalReports() {
+            try {
+                const response = await fetch(`${BASE_API_URL}/get_reports`); // Corrected URL
+                const reports = await response.json();
+                const reportsTableBody = document.getElementById('reportsTableBody');
+                reportsTableBody.innerHTML = ''; // Clear previous reports
+
+                if (reports.error) {
+                    reportsTableBody.innerHTML = `<tr><td colspan="7" class="px-6 py-4 text-center text-red-400">${reports.error}</td></tr>`;
+                    return;
+                }
+
+                if (reports.length === 0) {
+                    reportsTableBody.innerHTML = `<tr><td colspan="7" class="px-6 py-4 text-center text-gray-400">No historical reports available.</td></tr>`;
+                    return;
+                }
+
+                reports.forEach(report => {
+                    const row = reportsTableBody.insertRow();
+                    row.className = 'bg-gray-800 hover:bg-gray-700';
+                    row.insertCell(0).textContent = report.session_id.substring(0, 8) + '...';
+                    row.insertCell(1).textContent = report.start_time ? new Date(report.start_time).toLocaleString() : 'N/A';
+                    row.insertCell(2).textContent = report.end_time ? new Date(report.end_time).toLocaleString() : 'N/A';
+                    row.insertCell(3).textContent = report.total_packets;
+                    row.insertCell(4).textContent = report.total_intrusions;
+                    row.insertCell(5).textContent = Object.keys(report.attack_types || {}).join(', ') || 'N/A';
+                    const actionsCell = row.insertCell(6);
+                    const viewBtn = document.createElement('button');
+                    viewBtn.textContent = 'View Details';
+                    viewBtn.className = 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded-md text-sm';
+                    viewBtn.onclick = () => showReportDetails(report);
+                    actionsCell.appendChild(viewBtn);
+                });
+            } catch (error) {
+                console.error('Error fetching historical reports:', error);
+                const reportsTableBody = document.getElementById('reportsTableBody');
+                reportsTableBody.innerHTML = `<tr><td colspan="7" class="px-6 py-4 text-center text-red-400">Failed to load reports. Server might be down or an error occurred.</td></tr>`;
+            }
+        }
+
+        function showReportDetails(report) {
+            document.getElementById('modalSessionId').textContent = report.session_id;
+            document.getElementById('modalTotalPackets').textContent = report.total_packets;
+            document.getElementById('modalTotalIntrusions').textContent = report.total_intrusions;
+            document.getElementById('modalTopAttacks').textContent = Object.keys(report.attack_types || {}).join(', ') || 'N/A';
+
+            const modalEventsTableBody = document.getElementById('modalEventsTableBody');
+            modalEventsTableBody.innerHTML = '';
+            (report.alerts || []).forEach(alert => {
+                const row = modalEventsTableBody.insertRow();
+                row.className = alert.event_type === 'Intrusion' ? 'bg-red-900/20' : 'bg-gray-700';
+                row.insertCell(0).textContent = alert.timestamp;
+                row.insertCell(1).textContent = alert.result;
+                row.insertCell(2).textContent = alert.attack_type;
+                row.insertCell(3).textContent = alert.src_ip;
+                row.insertCell(4).textContent = alert.dst_ip;
+            });
+
+            const modalTrafficTableBody = document.getElementById('modalTrafficTableBody');
+            modalTrafficTableBody.innerHTML = '';
+            (report.raw_traffic || []).slice(0, 20).forEach(packet => { // Show first 20 raw packets
+                const row = modalTrafficTableBody.insertRow();
+                row.className = 'bg-gray-700';
+                row.insertCell(0).textContent = packet.timestamp;
+                row.insertCell(1).textContent = packet.src_ip;
+                row.insertCell(2).textContent = packet.dst_ip;
+                row.insertCell(3).textContent = packet.protocol_type;
+                row.insertCell(4).textContent = packet.packet_length;
+            });
+
+            document.getElementById('reportDetailsModal').classList.remove('hidden');
+        }
+
+        function closeReportDetailsModal() {
+            document.getElementById('reportDetailsModal').classList.add('hidden');
+        }
+
+        // --- Confusion Matrix Load Function (called when ML Deep Dive tab is clicked) ---
+        async function loadConfusionMatrix() {
+            console.log("Attempting to load confusion matrix.");
+            const confusionMatrixImg = document.getElementById('confusionMatrixImg');
+            const confusionMatrixPlaceholder = document.getElementById('confusionMatrixPlaceholder');
+            confusionMatrixImg.style.display = 'none';
+            confusionMatrixPlaceholder.style.display = 'block';
+            confusionMatrixPlaceholder.textContent = 'Loading confusion matrix...';
+
+            try {
+                const response = await fetch(`${BASE_API_URL}/confusion_matrix`); // Corrected URL
+                const data = await response.json();
+                if (data.image) {
+                    confusionMatrixImg.src = `data:image/png;base64,${data.image}`;
+                    confusionMatrixImg.style.display = 'block';
+                    confusionMatrixPlaceholder.style.display = 'none';
+                } else {
+                    confusionMatrixPlaceholder.textContent = data.error || 'Failed to load confusion matrix. No image data.';
+                }
+            } catch (error) {
+                console.error('Error fetching confusion matrix:', error);
+                confusionMatrixImg.style.display = 'none';
+                confusionMatrixPlaceholder.style.display = 'block';
+                confusionMatrixPlaceholder.textContent = 'Failed to load confusion matrix. Make sure the model is trained and artifacts are available, and backend is running.';
+            }
+        }
+
+        // --- Socket.IO for Manual Test Panel (Updated) ---
+        const manualTestResultDiv = document.getElementById('manualTestResult');
+        socket.on('prediction_result', (data) => {
+            if (data.error) {
+                manualTestResultDiv.textContent = `Error: ${data.error}`;
+                manualTestResultDiv.className = 'text-red-500 mt-2';
+            } else {
+                manualTestResultDiv.textContent = `Prediction: ${data.result} (Confidence: ${data.confidence}%)`;
+                manualTestResultDiv.className = data.is_intrusion ? 'text-red-500 mt-2' : 'text-green-500 mt-2';
+
+                // Update Prediction Overview Chart
+                if (predictionOverviewChart) predictionOverviewChart.destroy();
+                predictionOverviewChart = new Chart(document.getElementById('predictionOverviewChart'), {
+                    type: 'pie',
+                    data: {
+                        labels: ['Normal Traffic', 'Attack Detected!'],
+                        datasets: [{
+                            data: [data.is_intrusion ? (100 - data.confidence) : data.confidence, data.is_intrusion ? data.confidence : (100 - data.confidence)],
+                            backgroundColor: ['#28a745', '#dc3545'], // Green for Normal, Red for Attack
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { labels: { color: '#e2e8f0' } },
+                            title: { display: true, text: 'Prediction Overview', color: '#e2e8f0' }
+                        }
+                    }
+                });
+            }
+        });
+
+        // Function to handle manual test prediction request
+        document.getElementById('predictManualBtn').onclick = function() {
+            // Collect all input values from the manual test form
+            // Ensure these keys match the feature names expected by prediction_api.py's preprocess_features_for_prediction
+            const packetData = {
+                duration: parseFloat(document.getElementById('duration').value),
+                protocol_type: document.getElementById('protocol-type').value,
+                service: document.getElementById('service').value,
+                flag: document.getElementById('flag').value,
+                src_bytes: parseFloat(document.getElementById('src-bytes').value),
+                dst_bytes: parseFloat(document.getElementById('dst-bytes').value),
+                count: parseFloat(document.getElementById('count').value),
+                srv_count: parseFloat(document.getElementById('srv-count').value),
+                serror_rate: parseFloat(document.getElementById('serror-rate').value),
+                srv_serror_rate: parseFloat(document.getElementById('srv-serror-rate').value),
+                rerror_rate: parseFloat(document.getElementById('rerror-rate').value),
+                srv_rerror_rate: parseFloat(document.getElementById('srv-rerror-rate').value),
+                same_srv_rate: parseFloat(document.getElementById('same-srv-rate').value),
+                diff_srv_rate: parseFloat(document.getElementById('diff-srv-rate').value),
+                srv_diff_host_rate: parseFloat(document.getElementById('srv-diff-host-rate').value),
+                dst_host_count: parseFloat(document.getElementById('dst-host-count').value),
+                dst_host_srv_count: parseFloat(document.getElementById('dst-host-srv-count').value),
+                dst_host_same_srv_rate: parseFloat(document.getElementById('dst-host-same-srv-rate').value),
+                dst_host_diff_srv_rate: parseFloat(document.getElementById('dst-host-diff-srv-rate').value),
+                // Add all other NSL-KDD features here if your model uses them
+                // For simplicity, src_ip and dst_ip are NOT included as features here for manual test,
+                // as the prediction API currently uses encoder.transform which needs pre-defined classes.
+                // If you want to test with IPs, you'll need to modify the prediction_api.py's
+                // preprocess_features_for_prediction to handle unseen IPs more robustly (e.g., using hashing trick or dynamic updates to encoder)
+            };
+            socket.emit('request_prediction', packetData); // Send via SocketIO to app.py
+        };
+
+
+        // --- IP List Management Functions ---
+        async function fetchIpLists() {
+            try {
+                const response = await fetch(`${BASE_API_URL}/get_ip_lists`); // Corrected to /get_ip_lists
+                const data = await response.json();
+                
+                const blacklistDisplay = document.getElementById('blacklistDisplay');
+                const whitelistDisplay = document.getElementById('whitelistDisplay');
+                blacklistDisplay.innerHTML = '';
+                whitelistDisplay.innerHTML = '';
+
+                if (data.blacklist && data.blacklist.length > 0) {
+                    data.blacklist.forEach(ip => {
+                        const li = document.createElement('li');
+                        li.textContent = ip;
+                        li.className = 'py-1 px-2 border-b border-gray-600 last:border-b-0';
+                        blacklistDisplay.appendChild(li);
+                    });
+                } else {
+                    blacklistDisplay.innerHTML = '<li class="text-gray-400 py-1 px-2">No blacklisted IPs yet.</li>';
+                }
+
+                if (data.whitelist && data.whitelist.length > 0) {
+                    data.whitelist.forEach(ip => {
+                        const li = document.createElement('li');
+                        li.textContent = ip;
+                        li.className = 'py-1 px-2 border-b border-gray-600 last:border-b-0';
+                        whitelistDisplay.appendChild(li);
+                    });
+                } else {
+                    whitelistDisplay.innerHTML = '<li class="text-gray-400 py-1 px-2">No whitelisted IPs yet.</li>';
+                }
+
+            } catch (error) {
+                console.error('Error fetching IP lists:', error);
+                const blacklistDisplay = document.getElementById('blacklistDisplay');
+                const whitelistDisplay = document.getElementById('whitelistDisplay');
+                blacklistDisplay.innerHTML = '<li class="text-red-400 py-1 px-2">Failed to load blacklist.</li>';
+                whitelistDisplay.innerHTML = '<li class="text-red-400 py-1 px-2">Failed to load whitelist.</li>';
+            }
+        }
+
+        async function updateIpList(action) {
+            const ip = document.getElementById('ipInput').value.trim();
+            const type = document.getElementById('listType').value;
+            if (!ip) {
+                alert("Please enter an IP address.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${BASE_API_URL}/update_ip_list`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ip, type, action })
+                });
+                const data = await response.json();
+                if (data.status === 'success') {
+                    alert(data.message);
+                    fetchIpLists(); // Refresh the displayed lists
+                    document.getElementById('ipInput').value = ''; // Clear input
+                } else {
+                    alert(`Error: ${data.error}`);
+                }
+            } catch (error) {
+                console.error('Error updating IP list:', error);
+                alert('Failed to update IP list due to network or server error.');
+            }
+        }
+
+        function addIpToList() { updateIpList('add'); }
+        function removeIpFromList() { updateIpList('remove'); }
+
+        // --- Backend Service Status Check ---
+        async function checkServiceStatus(url, statusElementId) {
+            const statusIndicator = document.getElementById(statusElementId);
+            try {
+                const response = await fetch(url, { method: 'GET', signal: AbortSignal.timeout(2000) }); // Short timeout
+                if (response.ok) {
+                    statusIndicator.classList.replace('status-yellow', 'status-green');
+                    statusIndicator.classList.remove('status-red');
+                } else {
+                    statusIndicator.classList.replace('status-yellow', 'status-red');
+                    statusIndicator.classList.remove('status-green');
+                }
+            } catch (error) {
+                statusIndicator.classList.replace('status-yellow', 'status-red');
+                statusIndicator.classList.remove('status-green');
+            }
+        }
+
+        function refreshServiceStatuses() {
+            // APP.PY
+            checkServiceStatus(`${BASE_API_URL}/`, 'predictionApiStatus');
+            // ML.API
+            checkServiceStatus(`${PREDICTION_API_URL}/`, 'snifferStatus');
+            
+            // Firewall is conceptual for now
+            const fw = document.getElementById('firewallStatus');
+            fw.className = 'status-indicator status-green';
+        }
+
+
+        // Initial data fetch and map initialization on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeMap();
+            // fetchInitialData(); // Removed this, app.py's 'connect' event handler emits initial data
+            refreshServiceStatuses(); // Check statuses immediately
+            setInterval(refreshServiceStatuses, 5000); // Periodically check statuses
+        });
+
+    </script>
+</body>
+</html>
